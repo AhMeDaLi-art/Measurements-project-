@@ -1,3 +1,19 @@
+#include <WiFi.h>
+#include <PubSubClient.h>   // Library Manager: "PubSubClient" by Nick O'Leary
+
+// ====================== EDIT THESE ======================
+const char* WIFI_SSID     = "YOUR_WIFI_NAME";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+// ========================================================
+
+// ---------- MQTT (public test broker, no login) ----------
+// The web app (MotorStation_App.html) must use the same broker and topic.
+const char*    MQTT_HOST        = "broker.emqx.io";
+const uint16_t MQTT_PORT        = 1883;                              // plain TCP for the ESP32
+const char*    TOPIC_TELEMETRY  = "motorstation/demo-k7q2/telemetry"; // ESP32 -> web app
+const char*    TOPIC_STATUS     = "motorstation/demo-k7q2/status";    // "online" / "offline" (last will)
+constexpr uint32_t PUBLISH_INTERVAL_MS = 100;                        // 10 messages per second
+
 const int IR_SENSOR_PIN = 39; // Input-only pin (connected after 14.5k/22k + 1k divider)
 constexpr uint8_t SENSOR_PIN   = 36; // ADC1 pin (connected after 14.5k/22k + 1k divider)
 const int MOTOR_PWM_PIN = 22; // H-Bridge ENA
@@ -27,12 +43,18 @@ float zeroV = NOMINAL_ZERO_V;
 float sensorVoltage = 0.0f;
 float currentDC = 0.0f;
 float currentRMS = 0.0f;
+bool  curOutOfRange = false;     // ADC reading near 0 V or saturated -> sensor wiring problem
 
 uint32_t sumMv = 0;
 uint64_t sumSqMv = 0;
 uint16_t sampleCount = 0;
 uint32_t lastSampleUs = 0;
 uint32_t lastPrintMs = 0;
+uint32_t lastPublishMs = 0;
+
+// Motor command as last applied (reported to the web app)
+uint8_t motorDutyPct = 0;
+uint8_t motorDir = 0;            // 0 = forward, 1 = reverse
 
 // RPM state
 volatile uint32_t pulseCount = 0;
@@ -42,6 +64,13 @@ float rpm = 0.0f;
 uint32_t prevCount = 0;
 uint32_t prevPulseUs = 0;
 bool haveRpmRef = false;
+
+// Network state
+WiFiClient wifiClient;
+PubSubClient mqtt(wifiClient);
+uint32_t lastWifiTryMs = 0;
+uint32_t lastMqttTryMs = 0;
+bool wifiWasUp = false;
 
 void IRAM_ATTR onIrPulse() {
   const uint32_t now = micros();
@@ -104,18 +133,84 @@ void forward(int value){
   analogWrite(MOTOR_PWM_PIN,value);
   digitalWrite(MOTOR_IN1_PIN,1);
   digitalWrite(MOTOR_IN2_PIN,0);
+  motorDutyPct = (uint8_t)((value * 100 + 127) / 255);
+  motorDir = 0;
 }
 
 void back(int value){
   analogWrite(MOTOR_PWM_PIN,value);
   digitalWrite(MOTOR_IN1_PIN,0);
   digitalWrite(MOTOR_IN2_PIN,1);
+  motorDutyPct = (uint8_t)((value * 100 + 127) / 255);
+  motorDir = 1;
 }
 
 void stop(){
   analogWrite(MOTOR_PWM_PIN,0);
   digitalWrite(MOTOR_IN1_PIN,0);
   digitalWrite(MOTOR_IN2_PIN,0);
+  motorDutyPct = 0;
+}
+
+// ---------- Wi-Fi + MQTT ----------
+void connectMqtt() {
+  String id = "motorstation-esp32-" + String((uint32_t)ESP.getEfuseMac(), HEX);
+  Serial.printf("MQTT: connecting to %s:%u ... ", MQTT_HOST, MQTT_PORT);
+  // Last will: if the ESP32 drops off, the broker publishes "offline" (retained).
+  if (mqtt.connect(id.c_str(), nullptr, nullptr, TOPIC_STATUS, 0, true, "offline")) {
+    mqtt.publish(TOPIC_STATUS, "online", true);
+    Serial.println("connected");
+  } else {
+    Serial.printf("failed (rc=%d), will retry\n", mqtt.state());
+  }
+}
+
+// Called every loop; never blocks for long.
+void networkTick(uint32_t nowMs) {
+  if (WiFi.status() != WL_CONNECTED) {
+    if (wifiWasUp) {
+      wifiWasUp = false;
+      Serial.println("WiFi: connection lost");
+    }
+    if (nowMs - lastWifiTryMs >= 15000) {
+      lastWifiTryMs = nowMs;
+      Serial.printf("WiFi: connecting to \"%s\" ...\n", WIFI_SSID);
+      WiFi.disconnect();
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    }
+    return;
+  }
+
+  if (!wifiWasUp) {
+    wifiWasUp = true;
+    Serial.print("WiFi: connected, IP ");
+    Serial.println(WiFi.localIP());
+  }
+
+  if (!mqtt.connected()) {
+    if (nowMs - lastMqttTryMs >= 5000) {
+      lastMqttTryMs = nowMs;
+      connectMqtt();
+    }
+    return;
+  }
+  mqtt.loop();
+}
+
+// JSON fields match what the web app expects. "vib" is left out on purpose:
+// there is no vibration sensor on this board, so the app shows NO DATA for it.
+void publishTelemetry() {
+  if (!mqtt.connected()) return;
+
+  long curMa = lroundf(fabsf(currentDC) * 1000.0f);
+  if (curMa > 65535) curMa = 65535;
+  const uint8_t flags = curOutOfRange ? 1 : 0;   // bit 0 = current ADC out of range
+
+  char buf[160];
+  snprintf(buf, sizeof(buf),
+           "{\"rpm\":%ld,\"cur\":%ld,\"duty\":%u,\"mode\":0,\"dir\":%u,\"flags\":%u,\"target\":0}",
+           lroundf(rpm), curMa, (unsigned)motorDutyPct, (unsigned)motorDir, (unsigned)flags);
+  mqtt.publish(TOPIC_TELEMETRY, buf);
 }
 
 void setup(){
@@ -123,7 +218,7 @@ void setup(){
   analogReadResolution(12);
   analogSetPinAttenuation(SENSOR_PIN, ADC_11db);
   delay(500);
-  calibrateZero();
+  calibrateZero();               // runs before Wi-Fi starts and before the motor is driven
   lastSampleUs = micros();
   pinMode(MOTOR_PWM_PIN,OUTPUT);
   pinMode(MOTOR_IN1_PIN,OUTPUT);
@@ -131,6 +226,15 @@ void setup(){
   pinMode(IR_SENSOR_PIN,INPUT);   // GPIO39 has no internal pull-up
   attachInterrupt(digitalPinToInterrupt(IR_SENSOR_PIN), onIrPulse, RISING);
   stop();
+
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  lastWifiTryMs = millis();
+  mqtt.setServer(MQTT_HOST, MQTT_PORT);
+  mqtt.setBufferSize(256);
+  mqtt.setSocketTimeout(3);
+  mqtt.setKeepAlive(15);
 }
 
 void loop(){
@@ -158,17 +262,29 @@ void loop(){
 
       currentRMS = pinMvToSensorV(sqrtf(varMv)) / SENSITIVITY_V_PER_A;
 
+      curOutOfRange = (meanMv < 150.0f || meanMv > 3100.0f);
+
       sumMv = 0;
       sumSqMv = 0;
       sampleCount = 0;
     }
   }
 
-  // 2. Periodic RPM update + print
+  // 2. Wi-Fi / MQTT housekeeping
+  networkTick(nowMs);
+
+  // 3. RPM update + publish to the web app (10 Hz)
+  if (nowMs - lastPublishMs >= PUBLISH_INTERVAL_MS) {
+    lastPublishMs = nowMs;
+    updateRpm();
+    publishTelemetry();
+  }
+
+  // 4. Serial print
   if (nowMs - lastPrintMs >= PRINT_INTERVAL_MS) {
     lastPrintMs = nowMs;
-    updateRpm();
-    Serial.printf("Sensor: %.3f V | DC: %.2f mA | AC RMS: %.2f mA | RPM: %.1f\n",
-                  sensorVoltage, currentDC*1000, currentRMS*1000, rpm);
+    Serial.printf("Sensor: %.3f V | DC: %.2f mA | AC RMS: %.2f mA | RPM: %.1f | MQTT: %s\n",
+                  sensorVoltage, currentDC*1000, currentRMS*1000, rpm,
+                  mqtt.connected() ? "ok" : "no");
   }
 }

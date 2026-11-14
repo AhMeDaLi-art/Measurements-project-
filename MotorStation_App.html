@@ -148,6 +148,7 @@ details summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;alig
 
 <div class="row" style="margin-top:4px">
   <button id="btnConnect" class="btn primary" type="button">Connect ESP32</button>
+  <button id="btnMqtt" class="btn primary" type="button">Connect via MQTT</button>
   <button id="btnDemo" class="btn" type="button" aria-pressed="false">Demo mode</button>
 </div>
 
@@ -159,7 +160,7 @@ details summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;alig
   <div class="ico" id="bIco">&#x23FB;</div>
   <div>
     <div class="lbl" id="bLbl">OFFLINE</div>
-    <div class="why" id="bWhy">Connect to the ESP32 or start Demo mode.</div>
+    <div class="why" id="bWhy">Connect via MQTT or Bluetooth, or start Demo mode.</div>
   </div>
 </section>
 
@@ -307,6 +308,7 @@ details summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;alig
 
 <div class="stopbar"><div class="inner"><button id="btnStop" class="btn danger" type="button" disabled>STOP MOTOR</button></div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script>
 'use strict';
 /* ============================== constants ============================== */
@@ -316,6 +318,12 @@ const UUID_CMD = '7a1c0003-5d3e-4c8a-9b2f-3e5a6d7c8b01';
 const OP = {DUTY:1, TARGET:2, STOP:3, DIR:4, RESET:5};
 const FLAG = {CUR_RANGE:1, STALL:2, VIB_CLIP:4, TRIP:8};
 const LEVEL_NAME = ['NORMAL','NON-STABLE','CRITICAL'];
+
+/* MQTT over WebSocket. Must match the broker/topics in the ESP32 sketch.
+   The public test broker is open to everyone: change the topic names to something unique to you. */
+const MQTT_URL          = 'wss://broker.emqx.io:8084/mqtt';
+const MQTT_TOPIC_TEL    = 'motorstation/demo-k7q2/telemetry';
+const MQTT_TOPIC_STATUS = 'motorstation/demo-k7q2/status';
 
 /* ============================== settings =============================== */
 const DEF = {
@@ -361,11 +369,13 @@ const ST = {
 const H = {rpm:[], cur:[], vib:[]};
 const REC = {on:false, rows:[]};
 let bleDev=null, bleCmd=null, bleTel=null, userDisc=false, reconnecting=false;
+let mqttClient=null;
 let writeChain = Promise.resolve();
 
 /* ============================== helpers ================================ */
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-const live = () => (ST.conn==='connected'||ST.conn==='demo') && ST.T && !ST.stale;
+const linked = () => ST.conn==='connected'||ST.conn==='demo'||ST.conn==='mqtt';
+const live = () => linked() && ST.T && !ST.stale;
 function hhmmss(d=new Date()){return d.toLocaleTimeString([], {hour12:false})}
 function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
 
@@ -415,7 +425,7 @@ function evaluate(t, now){
     if(l) res.push({ch:'cur',lv:l,msg:'Current '+cur.toFixed(2)+' A \u2265 '+(l===2?CFG.curCrit:CFG.curWarn)+' A'}); }
   if(t.flags&FLAG.TRIP){ ch.cur=2; res.push({ch:'cur',lv:2,msg:'Over-current trip active \u2014 motor disabled by ESP32'}); }
   // vibration
-  { const l=lv(t.vib,CFG.vibWarn,CFG.vibCrit); ch.vib=l;
+  if(t.vib!=null){ const l=lv(t.vib,CFG.vibWarn,CFG.vibCrit); ch.vib=l;
     if(l) res.push({ch:'vib',lv:l,msg:'Vibration '+t.vib+' mV p-p \u2265 '+(l===2?CFG.vibCrit:CFG.vibWarn)+' mV'}); }
   if(t.flags&FLAG.VIB_CLIP){ ch.vib=Math.max(ch.vib,1); res.push({ch:'vib',lv:1,msg:'Vibration channel clipping (check gain / bias)'}); }
   // speed
@@ -495,8 +505,8 @@ function renderBanner(){
   let lvl, label, why, ico;
   if(ST.conn==='disconnected'||ST.conn==='connecting'){
     lvl='off'; label= ST.conn==='connecting'?'CONNECTING':'OFFLINE'; ico='\u23FB';
-    why= ST.conn==='connecting'?'Establishing Bluetooth link\u2026':'Connect to the ESP32 or start Demo mode.';
-  } else if(!ST.T){ lvl='off'; label='WAITING'; ico='\u2026'; why='Connected \u2014 waiting for the first telemetry packet.'; }
+    why= ST.conn==='connecting'?'Establishing connection\u2026':'Connect via MQTT or Bluetooth, or start Demo mode.';
+  } else if(!ST.T){ lvl='off'; label='WAITING'; ico='\u2026'; why= ST.conn==='mqtt' ? 'Connected to the broker \u2014 waiting for telemetry from the ESP32 (is it powered and on Wi-Fi?).' : 'Connected \u2014 waiting for the first telemetry packet.'; }
   else if(ST.stale){ lvl='off'; label='DATA STALE'; ico='!'; why='No telemetry for more than '+CFG.staleS+' s. Values below are not live.'; }
   else {
     lvl=ST.eff; label=LEVEL_NAME[ST.eff]; ico= ST.eff===0?'\u2713': ST.eff===1?'!':'\u2715';
@@ -520,14 +530,15 @@ function render(){
     const ch=ST.chLv;
     setGauge('rpm',t.rpm,CFG.rpmMax,String(t.rpm),ch.rpm);
     setGauge('cur',t.cur/1000,CFG.curMax,(t.cur/1000).toFixed(2),ch.cur);
-    setGauge('vib',t.vib,CFG.vibMax,String(t.vib),ch.vib);
+    if(t.vib==null) setGauge('vib',0,1,null,-9); else setGauge('vib',t.vib,CFG.vibMax,String(t.vib),ch.vib);
   }
   // control panel state
   const canCtl = ST.conn==='connected'||ST.conn==='demo';
   for(const id of ['btnStop','btnApply','btnReset','duty','tgt','dirF','dirR']) $(id).disabled=!canCtl;
   document.querySelectorAll('#quickDuty .btn').forEach(b=>b.disabled=!canCtl);
-  $('ctlNote').textContent = canCtl ? (ST.conn==='demo'?'Demo mode: commands drive the simulator only.':'Commands are sent to the ESP32 over Bluetooth.') : 'Controls are disabled until a device is connected.';
-  if(t && canCtl){
+  const lk = linked();
+  $('ctlNote').textContent = ST.conn==='mqtt' ? 'MQTT mode is read-only: this page only receives readings. Controls are disabled.' : canCtl ? (ST.conn==='demo'?'Demo mode: commands drive the simulator only.':'Commands are sent to the ESP32 over Bluetooth.') : 'Controls are disabled until a device is connected.';
+  if(t && lk){
     const modeTxt=t.mode===1?'closed loop, target <b>'+t.target+' rpm</b>':'open loop';
     $('rep').innerHTML='ESP32 reports: <b>'+modeTxt+'</b> \u2022 PWM <b>'+t.duty+' %</b> \u2022 <b>'+(t.dir?'reverse':'forward')+'</b>'+(ok?'':' (stale)');
     $('dirF').setAttribute('aria-pressed',String(!t.dir)); $('dirR').setAttribute('aria-pressed',String(!!t.dir));
@@ -558,7 +569,7 @@ function animate(now){
     $('chipIR').classList.toggle('on', on);
   }
   // vibration shake
-  const vr = ok? clamp(t.vib/CFG.vibMax,0,1):0;
+  const vr = ok? clamp((t.vib||0)/CFG.vibMax,0,1):0;
   const amp=vr*3.2;
   $('motorG').setAttribute('transform','translate('+((Math.random()-.5)*amp).toFixed(2)+' '+((Math.random()-.5)*amp).toFixed(2)+')');
   $('vibRings').setAttribute('opacity', (vr*0.9).toFixed(2));
@@ -608,7 +619,7 @@ function onSample(t){
   t.ts=now; ST.T=t;
   if(ST.stale){ ST.stale=false; addAlert(0,'Telemetry resumed.'); }
   const push=(a,v)=>{a.push({t:now,v}); if(a.length>650)a.shift()};
-  push(H.rpm,t.rpm); push(H.cur,t.cur/1000); push(H.vib,t.vib);
+  push(H.rpm,t.rpm); push(H.cur,t.cur/1000); if(t.vib!=null) push(H.vib,t.vib);
   // flag change events
   const nf=t.flags&~ST.prevFlags, cf=ST.prevFlags&~t.flags;
   if(nf&FLAG.CUR_RANGE) addAlert(1,'Current sensor ADC out of range.');
@@ -619,7 +630,7 @@ function onSample(t){
   ST.prevFlags=t.flags;
   const ev=evaluate(t,now); ST.chLv=ev.ch; updateState(ev,now);
   if(!ST.tabSynced){ ST.tabSynced=true; setTab(t.mode===1?'closed':'open'); }
-  if(REC.on && REC.rows.length<36000) REC.rows.push([new Date().toISOString(),t.rpm,(t.cur/1000).toFixed(3),t.vib,t.duty,t.mode,t.dir,t.flags,LEVEL_NAME[ST.eff]]);
+  if(REC.on && REC.rows.length<36000) REC.rows.push([new Date().toISOString(),t.rpm,(t.cur/1000).toFixed(3),(t.vib==null?'':t.vib),t.duty,t.mode,t.dir,t.flags,LEVEL_NAME[ST.eff]]);
   render(); drawCharts();
   if(REC.on) $('recNote').textContent='Recording: '+REC.rows.length+' samples.';
 }
@@ -630,7 +641,7 @@ function parsePacket(dv){
 }
 setInterval(()=>{
   const now=performance.now();
-  if((ST.conn==='connected'||ST.conn==='demo') && ST.T){
+  if(linked() && ST.T){
     const age=now-ST.T.ts;
     if(!ST.stale && age>CFG.staleS*1000){
       ST.stale=true; ST.c1=0; ST.c2=0; addAlert(1,'No telemetry for '+CFG.staleS+' s \u2014 data is stale.'); notify(1);
@@ -645,14 +656,17 @@ setInterval(()=>{
 function setConn(c){
   ST.conn=c;
   const chip=$('connChip'); chip.className='chip';
-  const txt={disconnected:'Disconnected',connecting:'Connecting\u2026',connected:'Connected (BLE)',demo:'DEMO \u2013 simulated'}[c];
-  if(c==='connected') chip.classList.add('on'); if(c==='connecting') chip.classList.add('busy'); if(c==='demo') chip.classList.add('demo');
+  const txt={disconnected:'Disconnected',connecting:'Connecting\u2026',connected:'Connected (BLE)',mqtt:'Connected (MQTT)',demo:'DEMO \u2013 simulated'}[c];
+  if(c==='connected'||c==='mqtt') chip.classList.add('on'); if(c==='connecting') chip.classList.add('busy'); if(c==='demo') chip.classList.add('demo');
   $('connText').textContent=txt;
-  $('btnConnect').textContent = c==='connected'?'Disconnect': c==='connecting'?'Connecting\u2026':'Connect ESP32';
-  $('btnConnect').disabled = (c==='connecting'||c==='demo');
+  $('btnConnect').textContent = c==='connected'?'Disconnect': (c==='connecting'&&!mqttClient)?'Connecting\u2026':'Connect ESP32';
+  $('btnConnect').disabled = (c==='connecting'||c==='demo'||c==='mqtt');
   $('btnDemo').setAttribute('aria-pressed',String(c==='demo')); $('btnDemo').textContent = c==='demo'?'Stop demo':'Demo mode';
-  $('btnDemo').disabled = (c==='connected'||c==='connecting');
+  $('btnDemo').disabled = (c==='connected'||c==='connecting'||c==='mqtt');
   $('btnAll').disabled = (c!=='disconnected');
+  const mq = (c==='mqtt'||(c==='connecting'&&!!mqttClient));
+  $('btnMqtt').textContent = mq ? 'Disconnect MQTT' : 'Connect via MQTT';
+  $('btnMqtt').disabled = (c==='connected'||c==='demo'||(c==='connecting'&&!mqttClient));
   $('demoCard').classList.toggle('hidden', c!=='demo');
   render();
 }
@@ -701,12 +715,58 @@ async function onGattDown(){
 function bleDisconnect(){ userDisc=true; try{ if(bleDev&&bleDev.gatt.connected) bleDev.gatt.disconnect(); }catch(e){} setConn('disconnected'); }
 function showSupport(){
   const n=$('supportNote'); n.classList.remove('hidden');
-  n.innerHTML='<b>Web Bluetooth is not available in this browser.</b> Use Chrome or Edge on Android or on a desktop computer (open this file from an https:// address or file://). iPhone Safari does not support Web Bluetooth; a Web-Bluetooth-capable iOS browser such as Bluefy is required. Demo mode works everywhere.';
+  n.innerHTML='<b>Web Bluetooth is not available in this browser.</b> Use Chrome or Edge on Android or on a desktop computer (open this file from an https:// address or file://). iPhone Safari does not support Web Bluetooth; a Web-Bluetooth-capable iOS browser such as Bluefy is required. MQTT and Demo modes work in any browser.';
+}
+
+/* ============================== MQTT (WebSocket) ======================= */
+// Incoming JSON is untrusted (public broker): every field is coerced to a bounded number.
+function mqttPacket(raw){
+  let j; try{ j=JSON.parse(raw) }catch(e){ return null }
+  if(!j || typeof j!=='object') return null;
+  const n=(v,lo,hi)=>{ v=Number(v); return Number.isFinite(v)? clamp(Math.round(v),lo,hi) : null };
+  const rpm=n(j.rpm,0,65535), cur=n(j.cur,0,65535);
+  if(rpm===null || cur===null) return null;
+  return { rpm, cur, vib:(j.vib==null?null:n(j.vib,0,65535)),
+           duty:n(j.duty,0,100)||0, mode:n(j.mode,0,1)||0, dir:n(j.dir,0,1)||0,
+           flags:n(j.flags,0,255)||0, target:n(j.target,0,65535)||0 };
+}
+function mqttConnect(){
+  if(typeof mqtt==='undefined'){ addAlert(1,'MQTT library did not load (this page needs internet access to load it).'); return; }
+  userDisc=false;
+  let c;
+  try{
+    c = mqtt.connect(MQTT_URL,{clientId:'motorstation-web-'+Math.random().toString(16).slice(2,10),
+                               clean:true, reconnectPeriod:3000, connectTimeout:8000, keepalive:30});
+  }catch(e){ addAlert(1,'MQTT: '+(e&&e.message?e.message:e)); return; }
+  mqttClient=c; resetLive(); setConn('connecting');
+  c.on('connect',()=>{
+    if(c!==mqttClient) return;
+    c.subscribe([MQTT_TOPIC_TEL,MQTT_TOPIC_STATUS],{qos:0},err=>{ if(err) addAlert(1,'MQTT subscribe failed: '+err.message); });
+    setConn('mqtt'); addAlert(0,'Connected to MQTT broker. Listening on '+MQTT_TOPIC_TEL+'.'); requestWake();
+  });
+  c.on('message',(topic,payload)=>{
+    if(c!==mqttClient) return;
+    const s=payload.toString();
+    if(topic===MQTT_TOPIC_TEL){ if(s.length>400) return; const p=mqttPacket(s); if(p) onSample(p); }
+    else if(topic===MQTT_TOPIC_STATUS){ addAlert(s==='online'?0:1,'ESP32 status: '+(s==='online'||s==='offline'?s:'unknown')); }
+  });
+  c.on('close',()=>{
+    if(c!==mqttClient || userDisc) return;
+    if(ST.conn==='mqtt'){ ST.stale=true; addAlert(1,'MQTT link lost. Reconnecting\u2026'); }
+    setConn('connecting');
+  });
+  c.on('error',e=>{ if(c===mqttClient) addAlert(1,'MQTT: '+(e&&e.message?e.message:e)); });
+}
+function mqttDisconnect(){
+  userDisc=true; const c=mqttClient; mqttClient=null;
+  try{ if(c) c.end(true); }catch(e){}
+  resetLive(); setConn('disconnected'); addAlert(0,'MQTT disconnected.');
 }
 
 /* ============================== commands =============================== */
 function sendCmd(op,val){
   if(ST.conn==='demo'){ SIM.handle(op,val); return; }
+  if(ST.conn==='mqtt'){ addAlert(1,'Read-only MQTT mode: command not sent.'); return; }
   if(ST.conn!=='connected' || !bleCmd){ addAlert(1,'Command not sent: not connected.'); return; }
   const b = op===OP.TARGET ? new Uint8Array([op,val&255,(val>>8)&255]) :
             (op===OP.DUTY||op===OP.DIR) ? new Uint8Array([op,val&255]) : new Uint8Array([op]);
@@ -784,13 +844,14 @@ function onCfg(){
 /* ============================== wake lock ============================== */
 let wl=null;
 async function requestWake(){ try{ if('wakeLock' in navigator && !wl){ wl=await navigator.wakeLock.request('screen'); wl.addEventListener('release',()=>{wl=null}); } }catch(e){} }
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && (ST.conn==='connected'||ST.conn==='demo')) requestWake(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && linked()) requestWake(); });
 
 /* ============================== wiring ================================= */
 ['rpm','cur','vib'].forEach(buildGauge);
 (function quick(){ const q=$('quickDuty'); [0,25,50,75,100].forEach(v=>{ const b=document.createElement('button'); b.type='button'; b.className='btn'; b.textContent=v+'%'; b.addEventListener('click',()=>setDuty(v,true)); q.appendChild(b); }); })();
 
 $('btnConnect').addEventListener('click',()=>{ ensureAudio(); if(ST.conn==='connected') bleDisconnect(); else bleConnect(false); });
+$('btnMqtt').addEventListener('click',()=>{ ensureAudio(); if(mqttClient) mqttDisconnect(); else mqttConnect(); });
 $('btnAll').addEventListener('click',()=>{ ensureAudio(); if(ST.conn==='disconnected') bleConnect(true); });
 $('btnDemo').addEventListener('click',()=>{ ensureAudio();
   if(ST.conn==='demo'){ SIM.stop(); resetLive(); setConn('disconnected'); addAlert(0,'Demo stopped.'); }

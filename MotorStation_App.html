@@ -168,7 +168,7 @@ details summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;alig
   <h2>Live measurements <span id="age" class="sub" style="text-transform:none;letter-spacing:0;font-weight:400"></span></h2>
   <div class="gauges">
     <div class="gcard" id="gc-rpm"><div class="gt">Speed</div><div class="gw"></div><div><span class="num">&mdash;</span><span class="unit">rpm</span></div><div class="pill">NO DATA</div></div>
-    <div class="gcard" id="gc-cur"><div class="gt">Motor current</div><div class="gw"></div><div><span class="num">&mdash;</span><span class="unit">A</span></div><div class="pill">NO DATA</div></div>
+    <div class="gcard" id="gc-cur"><div class="gt">Motor current</div><div class="gw"></div><div><span class="num">&mdash;</span><span class="unit">mA</span></div><div class="pill">NO DATA</div></div>
     <div class="gcard" id="gc-vib"><div class="gt">Vibration<small>relative level, not acceleration</small></div><div class="gw"></div><div><span class="num">&mdash;</span><span class="unit">mV p-p</span></div><div class="pill">NO DATA</div></div>
   </div>
   <div class="note">Vibration is the peak-to-peak voltage of the conditioned piezo signal at the ESP32 ADC pin. It is only meaningful when compared against a baseline of the same motor under repeatable conditions.</div>
@@ -263,7 +263,7 @@ details summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;alig
 <section class="card" aria-label="Trends">
   <h2>Trends (last 60 s)</h2>
   <div class="ctitle">Speed (rpm)</div><canvas id="chRpm"></canvas>
-  <div class="ctitle">Current (A)</div><canvas id="chCur"></canvas>
+  <div class="ctitle">Current (mA)</div><canvas id="chCur"></canvas>
   <div class="ctitle">Vibration (mV p-p, relative)</div><canvas id="chVib"></canvas>
   <div class="row" style="margin-top:0">
     <button id="btnRec" class="btn grow" type="button">Start recording</button>
@@ -327,9 +327,9 @@ const MQTT_TOPIC_STATUS = 'motorstation/demo-k7q2/status';
 
 /* ============================== settings =============================== */
 const DEF = {
-  rpmMax:3000, curMax:4, vibMax:1200,
+  rpmMax:3000, curMaxMa:4000, vibMax:1200,
   rpmWarn:0, rpmCrit:0,               // 0 = disabled
-  curWarn:2.0, curCrit:3.0,           // PLACEHOLDER
+  curWarnMa:2000, curCritMa:3000,   // PLACEHOLDER (mA)
   vibWarn:500, vibCrit:900,           // PLACEHOLDER
   errWarn:10, errCrit:25,             // closed-loop speed error, %
   warnN:5, critN:2, holdS:3, staleS:2,
@@ -337,12 +337,12 @@ const DEF = {
 };
 const SCHEMA = [
   ['Gauge scales'],
-  ['rpmMax','Speed full scale (rpm)',50],['curMax','Current full scale (A)',0.5],['vibMax','Vibration full scale (mV p-p)',50],
+  ['rpmMax','Speed full scale (rpm)',50],['curMaxMa','Current full scale (mA)',100],['vibMax','Vibration full scale (mV p-p)',50],
   ['Speed limits (0 = off)'],
   ['rpmWarn','Over-speed warning (rpm)',50],['rpmCrit','Over-speed critical (rpm)',50],
   ['errWarn','Closed-loop error warning (%)',1],['errCrit','Closed-loop error critical (%)',1],
-  ['Current limits (A)'],
-  ['curWarn','Warning at or above',0.1],['curCrit','Critical at or above',0.1],
+  ['Current limits (mA)'],
+  ['curWarnMa','Warning at or above',10],['curCritMa','Critical at or above',10],
   ['Vibration limits (mV p-p)'],
   ['vibWarn','Warning at or above',10],['vibCrit','Critical at or above',10],
   ['Alert timing'],
@@ -392,8 +392,8 @@ function buildGauge(key){
                num:root.querySelector('.num'), pill:root.querySelector('.pill')};
 }
 function drawTicks(){
-  const defs={rpm:[[CFG.rpmWarn,'warn'],[CFG.rpmCrit,'crit']],cur:[[CFG.curWarn,'warn'],[CFG.curCrit,'crit']],vib:[[CFG.vibWarn,'warn'],[CFG.vibCrit,'crit']]};
-  const max={rpm:CFG.rpmMax,cur:CFG.curMax,vib:CFG.vibMax};
+  const defs={rpm:[[CFG.rpmWarn,'warn'],[CFG.rpmCrit,'crit']],cur:[[CFG.curWarnMa,'warn'],[CFG.curCritMa,'crit']],vib:[[CFG.vibWarn,'warn'],[CFG.vibCrit,'crit']]};
+  const max={rpm:CFG.rpmMax,cur:CFG.curMaxMa,vib:CFG.vibMax};
   for(const k in defs){
     let h='';
     for(const [v,t] of defs[k]){
@@ -417,12 +417,12 @@ function setGauge(key,value,max,text,lv){
 /* ============================== classification ========================= */
 function evaluate(t, now){
   const res=[]; const ch={rpm:0,cur:0,vib:0};
-  const cur=t.cur/1000;
+  const cur=t.cur;   // mA
   const lv=(v,w,c)=>(c>0&&v>=c)?2:(w>0&&v>=w)?1:0;
   // current
   if(t.flags&FLAG.CUR_RANGE){ ch.cur=-1; res.push({ch:'cur',lv:-1,msg:'Current ADC out of range (check sensor wiring/scaling)'}); }
-  else { const l=lv(cur,CFG.curWarn,CFG.curCrit); ch.cur=l;
-    if(l) res.push({ch:'cur',lv:l,msg:'Current '+cur.toFixed(2)+' A \u2265 '+(l===2?CFG.curCrit:CFG.curWarn)+' A'}); }
+  else { const l=lv(cur,CFG.curWarnMa,CFG.curCritMa); ch.cur=l;
+    if(l) res.push({ch:'cur',lv:l,msg:'Current '+cur+' mA \u2265 '+(l===2?CFG.curCritMa:CFG.curWarnMa)+' mA'}); }
   if(t.flags&FLAG.TRIP){ ch.cur=2; res.push({ch:'cur',lv:2,msg:'Over-current trip active \u2014 motor disabled by ESP32'}); }
   // vibration
   if(t.vib!=null){ const l=lv(t.vib,CFG.vibWarn,CFG.vibCrit); ch.vib=l;
@@ -529,7 +529,7 @@ function render(){
   } else {
     const ch=ST.chLv;
     setGauge('rpm',t.rpm,CFG.rpmMax,String(t.rpm),ch.rpm);
-    setGauge('cur',t.cur/1000,CFG.curMax,(t.cur/1000).toFixed(2),ch.cur);
+    setGauge('cur',t.cur,CFG.curMaxMa,String(t.cur),ch.cur);
     if(t.vib==null) setGauge('vib',0,1,null,-9); else setGauge('vib',t.vib,CFG.vibMax,String(t.vib),ch.vib);
   }
   // control panel state
@@ -574,7 +574,7 @@ function animate(now){
   $('motorG').setAttribute('transform','translate('+((Math.random()-.5)*amp).toFixed(2)+' '+((Math.random()-.5)*amp).toFixed(2)+')');
   $('vibRings').setAttribute('opacity', (vr*0.9).toFixed(2));
   // current flow
-  const cr = ok? clamp(t.cur/1000/CFG.curMax,0,1):0;
+  const cr = ok? clamp(t.cur/CFG.curMaxMa,0,1):0;
   dash=(dash+ (cr>0? 12+70*cr:0)*dt)%12;
   const ccol= ok? (ST.chLv.cur===2?cssv('--crit'):ST.chLv.cur===1?cssv('--warn'):cssv('--ok')) : cssv('--off');
   for(const id of ['flowA','flowB']){ const p=$(id); p.setAttribute('stroke-dashoffset',(-dash).toFixed(1)); p.setAttribute('stroke',ccol); p.setAttribute('opacity', cr>0?'1':'.25'); }
@@ -609,7 +609,7 @@ function drawChart(cv,arr,max,color,lines){
 function drawCharts(){
   const acc=cssv('--accent');
   drawChart($('chRpm'),H.rpm,CFG.rpmMax,acc,[[CFG.rpmWarn,'--warn'],[CFG.rpmCrit,'--crit']]);
-  drawChart($('chCur'),H.cur,CFG.curMax,acc,[[CFG.curWarn,'--warn'],[CFG.curCrit,'--crit']]);
+  drawChart($('chCur'),H.cur,CFG.curMaxMa,acc,[[CFG.curWarnMa,'--warn'],[CFG.curCritMa,'--crit']]);
   drawChart($('chVib'),H.vib,CFG.vibMax,acc,[[CFG.vibWarn,'--warn'],[CFG.vibCrit,'--crit']]);
 }
 
@@ -619,7 +619,7 @@ function onSample(t){
   t.ts=now; ST.T=t;
   if(ST.stale){ ST.stale=false; addAlert(0,'Telemetry resumed.'); }
   const push=(a,v)=>{a.push({t:now,v}); if(a.length>650)a.shift()};
-  push(H.rpm,t.rpm); push(H.cur,t.cur/1000); if(t.vib!=null) push(H.vib,t.vib);
+  push(H.rpm,t.rpm); push(H.cur,t.cur); if(t.vib!=null) push(H.vib,t.vib);
   // flag change events
   const nf=t.flags&~ST.prevFlags, cf=ST.prevFlags&~t.flags;
   if(nf&FLAG.CUR_RANGE) addAlert(1,'Current sensor ADC out of range.');
@@ -630,7 +630,7 @@ function onSample(t){
   ST.prevFlags=t.flags;
   const ev=evaluate(t,now); ST.chLv=ev.ch; updateState(ev,now);
   if(!ST.tabSynced){ ST.tabSynced=true; setTab(t.mode===1?'closed':'open'); }
-  if(REC.on && REC.rows.length<36000) REC.rows.push([new Date().toISOString(),t.rpm,(t.cur/1000).toFixed(3),(t.vib==null?'':t.vib),t.duty,t.mode,t.dir,t.flags,LEVEL_NAME[ST.eff]]);
+  if(REC.on && REC.rows.length<36000) REC.rows.push([new Date().toISOString(),t.rpm,t.cur,(t.vib==null?'':t.vib),t.duty,t.mode,t.dir,t.flags,LEVEL_NAME[ST.eff]]);
   render(); drawCharts();
   if(REC.on) $('recNote').textContent='Recording: '+REC.rows.length+' samples.';
 }
@@ -816,7 +816,7 @@ function toggleRec(){
   else { $('btnRec').textContent='Start recording'; $('btnCsv').disabled=!REC.rows.length; $('recNote').textContent='Recorded '+REC.rows.length+' samples (kept until the next recording).'; }
 }
 function downloadCsv(){
-  const head='time_iso,rpm,current_A,vibration_mV_pp,duty_pct,mode(0=open,1=closed),dir(0=fwd,1=rev),flags,state\n';
+  const head='time_iso,rpm,current_mA,vibration_mV_pp,duty_pct,mode(0=open,1=closed),dir(0=fwd,1=rev),flags,state\n';
   const blob=new Blob([head+REC.rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='motor_station_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';

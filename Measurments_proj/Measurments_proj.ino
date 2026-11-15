@@ -2,8 +2,8 @@
 #include <PubSubClient.h>   // Library Manager: "PubSubClient" by Nick O'Leary
 
 // ====================== EDIT THESE ======================
-const char* WIFI_SSID     = "YOUR_WIFI_NAME";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID     = "TEData_94F1B3";
+const char* WIFI_PASSWORD = "h9c23691";
 // ========================================================
 
 // ---------- MQTT (public test broker, no login) ----------
@@ -44,7 +44,8 @@ float sensorVoltage = 0.0f;
 float currentDC = 0.0f;
 float currentRMS = 0.0f;
 bool  curOutOfRange = false;     // ADC reading near 0 V or saturated -> sensor wiring problem
-
+constexpr uint32_t REZERO_IDLE_MS = 1500;
+uint32_t idleSinceMs = 0;
 uint32_t sumMv = 0;
 uint64_t sumSqMv = 0;
 uint16_t sampleCount = 0;
@@ -256,11 +257,19 @@ void loop(){
       float varMv = (float)((double)sumSqMv / NUM_SAMPLES) - meanMv * meanMv;
       if (varMv < 0.0f) varMv = 0.0f;
 
-      sensorVoltage = pinMvToSensorV(meanMv);
-      currentDC = (sensorVoltage - zeroV) / SENSITIVITY_V_PER_A;
-      if (fabsf(currentDC) < DEADBAND_A) currentDC = 0.0f;
+    sensorVoltage = pinMvToSensorV(meanMv);
 
-      currentRMS = pinMvToSensorV(sqrtf(varMv)) / SENSITIVITY_V_PER_A;
+// Slowly track zero while the motor is off
+if (motorDutyPct == 0) {
+  if (!idleSinceMs) idleSinceMs = nowMs;
+  if (nowMs - idleSinceMs > REZERO_IDLE_MS)
+    zeroV += 0.01f * (sensorVoltage - zeroV);
+} else {
+  idleSinceMs = 0;
+}
+
+currentDC = -(sensorVoltage - zeroV) / SENSITIVITY_V_PER_A;
+if (fabsf(currentDC) < 0.05f) currentDC = 0.0f;      currentRMS = pinMvToSensorV(sqrtf(varMv)) / SENSITIVITY_V_PER_A;
 
       curOutOfRange = (meanMv < 150.0f || meanMv > 3100.0f);
 

@@ -2,8 +2,8 @@
 #include <PubSubClient.h>   // Library Manager: "PubSubClient" by Nick O'Leary
 
 // ====================== EDIT THESE ======================
-const char* WIFI_SSID     = "TEData_94F1B3";
-const char* WIFI_PASSWORD = "h9c23691";
+const char* WIFI_SSID     = "";
+const char* WIFI_PASSWORD = "";
 // ========================================================
 
 // ---------- MQTT (public test broker, no login) ----------

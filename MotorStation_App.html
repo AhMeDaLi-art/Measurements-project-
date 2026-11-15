@@ -7,303 +7,129 @@
 <title>Motor Station</title>
 <style>
 :root{
-  --bg:#f3f5f8;--card:#ffffff;--ink:#14202b;--mute:#5b6b7a;--line:#d8dee6;
+  --bg:#f3f5f8;--card:#fff;--ink:#14202b;--mute:#5b6b7a;--line:#d8dee6;
   --ok:#17803d;--warn:#a85f00;--crit:#c62828;--off:#5f6e7c;--accent:#1f4e79;
-  --okbg:#e3f4e9;--warnbg:#fff0d0;--critbg:#fde3e3;--offbg:#e8ecf0;--track:#e3e8ee;
+  --okbg:#e3f4e9;--warnbg:#fff0d0;--offbg:#e8ecf0;--onaccent:#fff;
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#0e141b;--card:#17202a;--ink:#e8eef4;--mute:#9aa9b7;--line:#2a3643;
-    --ok:#4cc27a;--warn:#f0b429;--crit:#ff6b6b;--off:#8795a3;--accent:#6aa7e0;
-    --okbg:#14301f;--warnbg:#38290a;--critbg:#3b1717;--offbg:#222c36;--track:#26323e;
-  }
-}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0e141b;--card:#17202a;--ink:#e8eef4;--mute:#9aa9b7;--line:#2a3643;
+  --ok:#4cc27a;--warn:#f0b429;--crit:#ff6b6b;--off:#8795a3;--accent:#6aa7e0;
+  --okbg:#14301f;--warnbg:#38290a;--offbg:#222c36;--onaccent:#0e141b;
+}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   padding:0 16px calc(86px + env(safe-area-inset-bottom));max-width:720px;margin-inline:auto}
 h1{font-size:18px;margin:0}
-h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0 0 10px;font-weight:700}
-button,input,select{font:inherit;color:inherit}
+h2{font-size:14px;margin:0 0 10px;font-weight:700;color:var(--mute)}
+button,input{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
-.top{display:flex;align-items:center;gap:8px;padding:calc(12px + env(safe-area-inset-top)) 0 4px;flex-wrap:wrap}
-.top .grow{flex:1;min-width:120px}
+.top{display:flex;align-items:center;gap:8px;padding:calc(12px + env(safe-area-inset-top)) 0 4px}
+.grow{flex:1}
 .sub{color:var(--mute);font-size:12px}
-.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 13px;min-height:42px;font-weight:600}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-@media (prefers-color-scheme:dark){.btn.primary{color:#0e141b}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 13px;min-height:44px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--onaccent)}
+.btn.go{background:var(--ok);border-color:var(--ok);color:var(--onaccent)}
 .btn.danger{background:var(--crit);border-color:var(--crit);color:#fff}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn[aria-pressed=true]{background:var(--warnbg);border-color:var(--warn);color:var(--warn)}
-.linkbtn{background:none;border:0;padding:6px 0;color:var(--accent);text-decoration:underline;font-size:13px}
-.linkbtn:disabled{opacity:.45;cursor:not-allowed}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 .chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--card)}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--off)}
-.chip.on .dot{background:var(--ok)}
-.chip.busy .dot{background:var(--warn)}
-.chip.demo{background:var(--warnbg);color:var(--warn);border-color:var(--warn)}
-.notice{border:1px solid var(--warn);background:var(--warnbg);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
-.notice b{color:var(--warn)}
-.hidden{display:none!important}
-
-/* status banner */
+.chip.on .dot{background:var(--ok)} .chip.busy .dot{background:var(--warn)}
 .banner{display:flex;gap:14px;align-items:center;border-radius:16px;padding:16px;margin-top:12px;border:2px solid var(--off);background:var(--offbg)}
-.banner .ico{flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:28px;font-weight:800;background:var(--off);color:#fff}
-.banner .lbl{font-size:26px;font-weight:800;letter-spacing:.03em;line-height:1.1}
+.banner .ico{flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:800;background:var(--off);color:var(--onaccent)}
+.banner .lbl{font-size:26px;font-weight:800;line-height:1.1}
 .banner .why{font-size:13px;color:var(--mute);margin-top:4px}
-.banner.lv-0{border-color:var(--ok);background:var(--okbg)} .banner.lv-0 .ico{background:var(--ok)}
-.banner.lv-1{border-color:var(--warn);background:var(--warnbg)} .banner.lv-1 .ico{background:var(--warn)}
-.banner.lv-2{border-color:var(--crit);background:var(--critbg)} .banner.lv-2 .ico{background:var(--crit)}
-.banner.lv-0 .lbl{color:var(--ok)} .banner.lv-1 .lbl{color:var(--warn)} .banner.lv-2 .lbl{color:var(--crit)}
-@media (prefers-color-scheme:dark){.banner .ico{color:#0e141b}}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(198,40,40,.45)}50%{box-shadow:0 0 0 10px rgba(198,40,40,0)}}
-.banner.lv-2{animation:pulse 1.2s infinite}
-@media (prefers-reduced-motion:reduce){.banner.lv-2{animation:none}}
-.critbar{position:fixed;left:0;right:0;top:0;z-index:30;background:var(--crit);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;gap:10px;align-items:center}
-.critbar span{flex:1;font-weight:700;font-size:14px}
-.critbar button{background:#fff;color:var(--crit);border:0;border-radius:8px;padding:8px 12px;font-weight:700}
-
-/* gauges */
-.gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-@media (max-width:480px){.gauges{grid-template-columns:1fr}}
-.gcard{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;background:var(--card)}
-.gcard .gt{font-size:12px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
-.gcard .gt small{display:block;text-transform:none;letter-spacing:0;font-weight:400;font-size:11px}
-.gsvg{width:100%;max-width:200px;display:block;margin:2px auto 0}
-.gbg{fill:none;stroke:var(--track);stroke-width:11}
-.gfg{fill:none;stroke:var(--off);stroke-width:11;transition:stroke-dashoffset .25s,stroke .25s}
-.tick{stroke-width:2}
-.num{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.banner.lv-0{border-color:var(--ok);background:var(--okbg)} .banner.lv-0 .ico{background:var(--ok)} .banner.lv-0 .lbl{color:var(--ok)}
+.banner.lv-1{border-color:var(--warn);background:var(--warnbg)} .banner.lv-1 .ico{background:var(--warn)} .banner.lv-1 .lbl{color:var(--warn)}
+.reads{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:480px){.reads{grid-template-columns:1fr}}
+.read{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.read .t{font-size:12px;font-weight:700;color:var(--mute)}
+.num{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
 .unit{font-size:13px;color:var(--mute);margin-left:4px}
-.pill{display:inline-block;margin-top:4px;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800;letter-spacing:.05em;background:var(--offbg);color:var(--off)}
-.gcard.lv-0 .gfg{stroke:var(--ok)} .gcard.lv-0 .pill{background:var(--okbg);color:var(--ok)}
-.gcard.lv-1 .gfg{stroke:var(--warn)} .gcard.lv-1 .pill{background:var(--warnbg);color:var(--warn)}
-.gcard.lv-2 .gfg{stroke:var(--crit)} .gcard.lv-2 .pill{background:var(--critbg);color:var(--crit)}
-
-/* illustration */
-.ill{width:100%;height:auto;display:block}
-.ill text{font:10px system-ui,sans-serif;fill:var(--mute)}
-.ill .box{fill:var(--card);stroke:var(--ink);stroke-width:1.4}
-.ill .wire{fill:none;stroke:var(--mute);stroke-width:1.4}
-.ill .sig{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-dasharray:3 3}
-.ill .flow{fill:none;stroke:var(--off);stroke-width:3;stroke-dasharray:6 6}
-.note{font-size:12px;color:var(--mute);margin-top:6px}
-
-/* controls */
+.read .s{font-size:11px;color:var(--mute);min-height:15px}
+.keyrow{display:flex;gap:8px}
+.keyrow input{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 12px;min-height:44px}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.seg button{border:0;background:var(--card);padding:10px 8px;min-height:42px;font-weight:600;border-right:1px solid var(--line)}
+.seg button{border:0;background:var(--card);padding:10px 8px;min-height:44px;font-weight:600;border-right:1px solid var(--line)}
 .seg button:last-child{border-right:0}
-.seg button[aria-pressed=true]{background:var(--accent);color:#fff}
-@media (prefers-color-scheme:dark){.seg button[aria-pressed=true]{color:#0e141b}}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
-.row>.grow{flex:1}
-input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--onaccent)}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
 .big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
-.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
-.quick .btn{padding:8px 0;min-height:38px}
-.rep{font-size:12px;color:var(--mute);margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
+.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}
+.quick .btn{padding:8px 0;min-height:40px}
+.lab{font-size:13px;font-weight:700;margin:14px 0 6px}
+.rep{font-size:12px;color:var(--mute);margin-top:12px;border-top:1px dashed var(--line);padding-top:8px}
 .rep b{color:var(--ink)}
 .stopbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
 .stopbar .inner{max-width:720px;margin:auto}
-.stopbar button{width:100%;min-height:52px;font-size:17px;font-weight:800;letter-spacing:.06em}
-
-/* charts */
-canvas{width:100%;height:110px;display:block;border:1px solid var(--line);border-radius:10px;background:var(--card);margin-bottom:10px}
-.ctitle{font-size:12px;color:var(--mute);margin:4px 0 4px;font-weight:600}
-
-/* alerts */
-.log{list-style:none;margin:8px 0 0;padding:0;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.stopbar button{width:100%;min-height:52px;font-size:17px;font-weight:800}
+.log{list-style:none;margin:8px 0 0;padding:0;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px}
 .log li{display:flex;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);font-size:13px}
 .log li:last-child{border-bottom:0}
 .log time{color:var(--mute);font-variant-numeric:tabular-nums;flex:none}
-.tag{flex:none;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;align-self:flex-start;margin-top:1px}
-.tag.l0{background:var(--offbg);color:var(--off)} .tag.l1{background:var(--warnbg);color:var(--warn)} .tag.l2{background:var(--critbg);color:var(--crit)}
+.log li.w span{color:var(--warn);font-weight:600}
 .empty{padding:12px;color:var(--mute);font-size:13px}
-label.sw{display:flex;align-items:center;gap:6px;font-size:13px}
-
-/* settings */
-details summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;align-items:center}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:8px}
-.grid2 label{font-size:12px;color:var(--mute);display:flex;flex-direction:column;gap:3px}
-.grid2 input{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px;min-height:40px;width:100%}
-.sech{grid-column:1/-1;font-size:12px;font-weight:700;margin-top:8px;color:var(--ink)}
 </style>
 </head>
 <body>
 
-<div id="critBar" class="critbar hidden" role="alert">
-  <span id="critText">CRITICAL</span>
-  <button id="critAck" type="button">Acknowledge</button>
-</div>
-
 <header class="top">
-  <div class="grow">
-    <h1>Motor Station</h1>
-    <div class="sub">Health monitor &amp; RPM control</div>
-  </div>
-  <span id="connChip" class="chip"><span class="dot"></span><span id="connText">Disconnected</span></span>
+  <div class="grow"><h1>Motor Station</h1><div class="sub">Remote control &amp; monitor over MQTT</div></div>
+  <span id="chip" class="chip"><span class="dot"></span><span id="chipT">Disconnected</span></span>
 </header>
+<div class="row" style="margin-top:4px"><button id="btnConn" class="btn primary grow" type="button">Connect</button></div>
 
-<div class="row" style="margin-top:4px">
-  <button id="btnConnect" class="btn primary" type="button">Connect ESP32</button>
-  <button id="btnMqtt" class="btn primary" type="button">Connect via MQTT</button>
-  <button id="btnDemo" class="btn" type="button" aria-pressed="false">Demo mode</button>
-</div>
-
-<button id="btnAll" class="linkbtn" type="button">ESP32 not listed? Show all Bluetooth devices</button>
-<div id="supportNote" class="notice hidden"></div>
-<div id="thrNote" class="notice hidden"><b>Thresholds are placeholders.</b> NORMAL / NON-STABLE / CRITICAL limits and gauge scales have not been established from baseline measurements of your motor. Set them under Settings and tick “Thresholds calibrated” when done.</div>
-
-<section id="banner" class="banner lv-off" role="status" aria-live="polite">
+<section id="banner" class="banner" role="status" aria-live="polite">
   <div class="ico" id="bIco">&#x23FB;</div>
-  <div>
-    <div class="lbl" id="bLbl">OFFLINE</div>
-    <div class="why" id="bWhy">Connect via MQTT or Bluetooth, or start Demo mode.</div>
+  <div><div class="lbl" id="bLbl">OFFLINE</div><div class="why" id="bWhy"></div></div>
+</section>
+
+<section class="card" aria-label="Live readings">
+  <h2>Live readings <span id="age" class="sub" style="font-weight:400"></span></h2>
+  <div class="reads">
+    <div class="read"><div class="t">Speed</div><div><span class="num" id="rRpm">&mdash;</span><span class="unit">rpm</span></div><div class="s" id="rRpmS"></div></div>
+    <div class="read"><div class="t">Motor current</div><div><span class="num" id="rCur">&mdash;</span><span class="unit">mA</span></div><div class="s"></div></div>
+    <div class="read"><div class="t">PWM applied</div><div><span class="num" id="rDuty">&mdash;</span><span class="unit">%</span></div><div class="s" id="rDutyS"></div></div>
   </div>
 </section>
 
-<section class="card" aria-label="Live measurements">
-  <h2>Live measurements <span id="age" class="sub" style="text-transform:none;letter-spacing:0;font-weight:400"></span></h2>
-  <div class="gauges">
-    <div class="gcard" id="gc-rpm"><div class="gt">Speed</div><div class="gw"></div><div><span class="num">&mdash;</span><span class="unit">rpm</span></div><div class="pill">NO DATA</div></div>
-    <div class="gcard" id="gc-cur"><div class="gt">Motor current</div><div class="gw"></div><div><span class="num">&mdash;</span><span class="unit">mA</span></div><div class="pill">NO DATA</div></div>
-    <div class="gcard" id="gc-vib"><div class="gt">Vibration<small>relative level, not acceleration</small></div><div class="gw"></div><div><span class="num">&mdash;</span><span class="unit">mV p-p</span></div><div class="pill">NO DATA</div></div>
+<section class="card" aria-label="Motor control">
+  <h2>Control</h2>
+  <div class="keyrow">
+    <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Owner key (same as OWNER_KEY in the firmware)" aria-label="Owner key">
+    <button id="btnTake" class="btn primary" type="button" disabled>Take control</button>
   </div>
-  <div class="note">Vibration is the peak-to-peak voltage of the conditioned piezo signal at the ESP32 ADC pin. It is only meaningful when compared against a baseline of the same motor under repeatable conditions.</div>
-</section>
+  <div class="sub" id="ownNote" style="margin-top:6px"></div>
 
-<section class="card" aria-label="Station illustration">
-  <h2>Station view</h2>
-  <svg class="ill" viewBox="0 0 360 215" role="img" aria-label="Animated diagram of the motor, disk, IR sensor, piezo sensor and current path">
-    <!-- ESP32 -->
-    <rect class="box" x="8" y="12" width="72" height="44" rx="6"/>
-    <text x="44" y="32" text-anchor="middle" style="fill:var(--ink);font-weight:700;font-size:11px">ESP32</text>
-    <text x="44" y="45" text-anchor="middle">controller</text>
-    <!-- H-bridge -->
-    <rect class="box" x="8" y="96" width="72" height="50" rx="6"/>
-    <text x="44" y="119" text-anchor="middle" style="fill:var(--ink);font-weight:700;font-size:11px">H-bridge</text>
-    <text x="44" y="132" text-anchor="middle">12 V supply</text>
-    <line class="sig" x1="44" y1="56" x2="44" y2="96"/>
-    <text x="49" y="80">PWM / DIR</text>
-    <!-- current wires -->
-    <path class="wire" d="M80 112 H112"/><path class="wire" d="M80 130 H112"/>
-    <path id="flowA" class="flow" d="M80 112 H112"/><path id="flowB" class="flow" d="M112 130 H80"/>
-    <circle cx="96" cy="121" r="9" fill="var(--card)" stroke="var(--ink)" stroke-width="1.4"/>
-    <text x="96" y="124" text-anchor="middle" style="fill:var(--ink);font-weight:700">I</text>
-    <text x="96" y="152" text-anchor="middle">current</text>
-    <path class="sig" d="M96 112 V46 H80"/>
-    <!-- motor group (vibrates) -->
-    <g id="motorG">
-      <rect id="motorBody" x="112" y="92" width="100" height="64" rx="8" fill="var(--offbg)" stroke="var(--ink)" stroke-width="1.6"/>
-      <text x="162" y="120" text-anchor="middle" style="fill:var(--ink);font-weight:700;font-size:11px">12 V DC</text>
-      <text x="162" y="133" text-anchor="middle">motor</text>
-      <circle id="piezo" cx="162" cy="84" r="9" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
-      <text x="162" y="87" text-anchor="middle" style="fill:var(--accent);font-weight:700;font-size:9px">~</text>
-      <g id="vibRings" opacity="0"><circle cx="162" cy="84" r="14" fill="none" stroke="var(--accent)" stroke-width="1"/><circle cx="162" cy="84" r="19" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".6"/></g>
-    </g>
-    <text x="162" y="68" text-anchor="middle">piezo</text>
-    <path class="sig" d="M162 75 V34 H80"/>
-    <!-- shaft + disk -->
-    <line x1="212" y1="124" x2="262" y2="124" stroke="var(--ink)" stroke-width="2.5" stroke-dasharray="1 0"/>
-    <g id="diskG" transform="translate(292 124)">
-      <circle r="40" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/>
-      <circle r="30" fill="none" stroke="var(--track)" stroke-width="1"/>
-      <path d="M-5 -40 L5 -40 L3.5 -22 L-3.5 -22 Z" fill="var(--accent)"/>
-      <circle r="4" fill="var(--ink)"/>
-    </g>
-    <text x="292" y="180" text-anchor="middle">disk with reflective strip</text>
-    <!-- IR sensor -->
-    <rect id="irBody" x="278" y="58" width="28" height="12" rx="3" fill="var(--card)" stroke="var(--ink)" stroke-width="1.4"/>
-    <polygon id="irBeam" points="285,70 299,70 296,84 288,84" fill="var(--accent)" opacity=".15"/>
-    <circle id="irLed" cx="292" cy="64" r="3" fill="var(--off)"/>
-    <text x="292" y="52" text-anchor="middle">IR sensor</text>
-    <path class="sig" d="M292 58 V22 H80"/>
-    <text x="215" y="19" text-anchor="middle">IR pulses &rarr; RPM</text>
-    <text x="8" y="200">Animation is illustrative: rotation speed is scaled, vibration shake follows the relative level.</text>
-  </svg>
-  <div class="row" style="margin-top:2px">
-    <span class="chip" id="chipIR"><span class="dot"></span>IR pulse</span>
-    <span class="chip" id="chipDir">Direction: &mdash;</span>
-  </div>
-</section>
-
-<section class="card" aria-label="Motor speed control">
-  <h2>Speed control</h2>
-  <div class="seg" role="group" aria-label="Control mode">
-    <button id="tabOpen" type="button" aria-pressed="true">Open loop (PWM %)</button>
-    <button id="tabClosed" type="button" aria-pressed="false">Closed loop (RPM)</button>
+  <div class="lab">State</div>
+  <div class="seg" role="group" aria-label="Motor state">
+    <button id="btnOff" type="button" aria-pressed="true" disabled>Stopped</button>
+    <button id="btnOn" type="button" aria-pressed="false" disabled>Running</button>
   </div>
 
-  <div id="paneOpen">
-    <div class="row"><div class="big"><span id="dutyVal">0</span> %</div><div class="sub grow">PWM duty command &mdash; no speed feedback</div></div>
-    <input id="duty" type="range" min="0" max="100" step="1" value="0" aria-label="PWM duty cycle percent">
-    <div class="quick" id="quickDuty"></div>
-  </div>
+  <div class="lab">Speed</div>
+  <div class="row" style="margin-top:0"><div class="big"><span id="dutyVal">0</span> %</div><div class="sub grow">PWM duty. Applies while the motor is in the Running state.</div></div>
+  <input id="duty" type="range" min="0" max="100" step="1" value="0" aria-label="PWM duty cycle percent" disabled>
+  <div class="quick" id="quick"></div>
 
-  <div id="paneClosed" class="hidden">
-    <div class="row"><div class="big"><span id="tgtVal">0</span> rpm</div><div class="sub grow">Target speed &mdash; ESP32 adjusts PWM using measured IR RPM</div></div>
-    <input id="tgt" type="range" min="0" max="3000" step="10" value="0" aria-label="Target speed in rpm">
-    <div class="row"><button id="btnApply" class="btn primary grow" type="button">Apply target</button></div>
+  <div class="lab">Direction</div>
+  <div class="seg" role="group" aria-label="Direction">
+    <button id="dirF" type="button" aria-pressed="true" disabled>Forward</button>
+    <button id="dirR" type="button" aria-pressed="false" disabled>Reverse</button>
   </div>
+  <div class="sub" style="margin-top:6px">Changing direction while running stops the motor and pauses 1.5 s. Set Running again afterwards.</div>
 
-  <div class="row">
-    <div class="sub">Direction</div>
-    <div class="seg grow" role="group" aria-label="Direction">
-      <button id="dirF" type="button" aria-pressed="true">Forward</button>
-      <button id="dirR" type="button" aria-pressed="false">Reverse</button>
-    </div>
-  </div>
-  <div class="row"><button id="btnReset" class="btn hidden grow" type="button">Reset over-current trip</button></div>
   <div class="rep" id="rep">ESP32 reports: &mdash;</div>
-  <div class="note" id="ctlNote">Controls are disabled until a device is connected.</div>
 </section>
 
-<section class="card" aria-label="Trends">
-  <h2>Trends (last 60 s)</h2>
-  <div class="ctitle">Speed (rpm)</div><canvas id="chRpm"></canvas>
-  <div class="ctitle">Current (mA)</div><canvas id="chCur"></canvas>
-  <div class="ctitle">Vibration (mV p-p, relative)</div><canvas id="chVib"></canvas>
-  <div class="row" style="margin-top:0">
-    <button id="btnRec" class="btn grow" type="button">Start recording</button>
-    <button id="btnCsv" class="btn grow" type="button" disabled>Download CSV</button>
-  </div>
-  <div class="note" id="recNote">Recording is off.</div>
-</section>
-
-<section class="card" aria-label="Alerts">
-  <h2>Alerts</h2>
-  <div class="row" style="margin-top:0">
-    <label class="sw"><input type="checkbox" id="optSound"> Sound</label>
-    <label class="sw"><input type="checkbox" id="optHaptic"> Vibrate phone</label>
-    <button id="btnClearLog" class="btn" type="button" style="margin-left:auto">Clear</button>
-  </div>
-  <ul id="log" class="log" aria-live="polite"><li class="empty">No events yet.</li></ul>
-</section>
-
-<section class="card hidden" id="demoCard" aria-label="Demo fault injection">
-  <h2>Demo: inject a fault</h2>
-  <div class="row" style="margin-top:0">
-    <button class="btn" type="button" data-fault="imb" aria-pressed="false">Imbalance</button>
-    <button class="btn" type="button" data-fault="over" aria-pressed="false">Overload</button>
-    <button class="btn" type="button" data-fault="stall" aria-pressed="false">Stall</button>
-    <button class="btn" type="button" data-fault="sensor" aria-pressed="false">Current sensor fault</button>
-  </div>
-  <div class="note">All values in Demo mode are simulated. Nothing is sent to hardware.</div>
-</section>
-
-<section class="card">
-  <details>
-    <summary>Settings: scales, thresholds, alert timing</summary>
-    <div class="notice" style="margin-top:8px">Limits stored on this phone only. Replace the placeholder defaults with values derived from the motor/driver datasheets and your own repeatable baseline tests.</div>
-    <div class="grid2" id="settingsGrid"></div>
-    <div class="row">
-      <label class="sw"><input type="checkbox" id="optCal"> Thresholds calibrated</label>
-      <button id="btnDefaults" class="btn" type="button" style="margin-left:auto">Restore defaults</button>
-    </div>
-    <div class="note">Classification runs in this app: overall state is the worst channel. A warning needs the “warning samples” in a row; a critical needs the (fewer) “critical samples”; the state only falls after readings stay lower for the “release hold” time. Telemetry arrives at about 10 samples per second.</div>
-  </details>
+<section class="card" aria-label="Events">
+  <h2>Events</h2>
+  <ul id="log" class="log"><li class="empty">No events yet.</li></ul>
 </section>
 
 <div class="stopbar"><div class="inner"><button id="btnStop" class="btn danger" type="button" disabled>STOP MOTOR</button></div></div>
@@ -311,584 +137,266 @@ details summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;alig
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script>
 'use strict';
-/* ============================== constants ============================== */
-const UUID_SVC = '7a1c0001-5d3e-4c8a-9b2f-3e5a6d7c8b01';
-const UUID_TEL = '7a1c0002-5d3e-4c8a-9b2f-3e5a6d7c8b01';
-const UUID_CMD = '7a1c0003-5d3e-4c8a-9b2f-3e5a6d7c8b01';
-const OP = {DUTY:1, TARGET:2, STOP:3, DIR:4, RESET:5};
-const FLAG = {CUR_RANGE:1, STALL:2, VIB_CLIP:4, TRIP:8};
-const LEVEL_NAME = ['NORMAL','NON-STABLE','CRITICAL'];
+/* ====== Must match the ESP32 sketch (same broker + topics). The broker is public: change "demo-k7q2" in both. ====== */
+const MQTT_URL = 'wss://broker.emqx.io:8084/mqtt';
+const BASE     = 'motorstation/demo-k7q2/';
+const T_TEL = BASE+'telemetry', T_ST = BASE+'status', T_CMD = BASE+'cmd';
+const STALE_MS = 6000;   // firmware publishes every 2 s
+const HB_MS    = 4000;   // heartbeat; firmware lease is 12 s
+const ACK_MS   = 3000, MAX_TRIES = 3;
 
-/* MQTT over WebSocket. Must match the broker/topics in the ESP32 sketch.
-   The public test broker is open to everyone: change the topic names to something unique to you. */
-const MQTT_URL          = 'wss://broker.emqx.io:8084/mqtt';
-const MQTT_TOPIC_TEL    = 'motorstation/demo-k7q2/telemetry';
-const MQTT_TOPIC_STATUS = 'motorstation/demo-k7q2/status';
-
-/* ============================== settings =============================== */
-const DEF = {
-  rpmMax:500, curMaxMa:500, vibMax:1200,
-  rpmWarn:300, rpmCrit:400,               // 0 = disabled
-  curWarnMa:250, curCritMa:300,   // PLACEHOLDER (mA)
-  vibWarn:500, vibCrit:900,           // PLACEHOLDER
-  errWarn:10, errCrit:25,             // closed-loop speed error, %
-  warnN:5, critN:2, holdS:3, staleS:2,
-  sound:true, haptic:true, calibrated:false
-};
-const SCHEMA = [
-  ['Gauge scales'],
-  ['rpmMax','Speed full scale (rpm)',50],['curMaxMa','Current full scale (mA)',100],['vibMax','Vibration full scale (mV p-p)',50],
-  ['Speed limits (0 = off)'],
-  ['rpmWarn','Over-speed warning (rpm)',50],['rpmCrit','Over-speed critical (rpm)',50],
-  ['errWarn','Closed-loop error warning (%)',1],['errCrit','Closed-loop error critical (%)',1],
-  ['Current limits (mA)'],
-  ['curWarnMa','Warning at or above',10],['curCritMa','Critical at or above',10],
-  ['Vibration limits (mV p-p)'],
-  ['vibWarn','Warning at or above',10],['vibCrit','Critical at or above',10],
-  ['Alert timing'],
-  ['warnN','Warning samples in a row',1],['critN','Critical samples in a row',1],
-  ['holdS','Release hold (s)',0.5],['staleS','No-data timeout (s)',0.5]
-];
-function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
-function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-let CFG = Object.assign({}, DEF, lsGet('ms_cfg')||{});
 const $ = id => document.getElementById(id);
+const hhmmss = () => new Date().toLocaleTimeString([], {hour12:false});
 
-/* ============================== state ================================== */
-const ST = {
-  conn:'disconnected',      // disconnected | connecting | connected | demo
-  T:null,                   // latest telemetry
-  stale:false,
-  eff:0, c1:0, c2:0, belowSince:0,
-  acked:false,
-  prevFlags:0,
-  closedSince:0, lastMode:-1, lastTarget:-1,
-  tabSynced:false,
-  reasons:[], chLv:{rpm:-1,cur:-1,vib:-1}
-};
-const H = {rpm:[], cur:[], vib:[]};
-const REC = {on:false, rows:[]};
-let bleDev=null, bleCmd=null, bleTel=null, userDisc=false, reconnecting=false;
-let mqttClient=null;
-let writeChain = Promise.resolve();
-
-/* ============================== helpers ================================ */
-const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-const linked = () => ST.conn==='connected'||ST.conn==='demo'||ST.conn==='mqtt';
-const live = () => linked() && ST.T && !ST.stale;
-function hhmmss(d=new Date()){return d.toLocaleTimeString([], {hour12:false})}
-function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
-
-/* ============================== gauges ================================= */
-const ARC = Math.PI*50;
-function polar(f,r){const a=Math.PI*(1-f);return [60+r*Math.cos(a),62-r*Math.sin(a)]}
-const gauges = {};
-function buildGauge(key){
-  const root=$('gc-'+key);
-  root.querySelector('.gw').innerHTML =
-   '<svg class="gsvg" viewBox="0 0 120 74" aria-hidden="true"><path class="gbg" d="M10 62 A50 50 0 0 1 110 62"/>'+
-   '<path class="gfg" d="M10 62 A50 50 0 0 1 110 62" stroke-dasharray="'+ARC+'" stroke-dashoffset="'+ARC+'"/><g class="ticks"></g></svg>';
-  gauges[key]={root, fg:root.querySelector('.gfg'), ticks:root.querySelector('.ticks'),
-               num:root.querySelector('.num'), pill:root.querySelector('.pill')};
-}
-function drawTicks(){
-  const defs={rpm:[[CFG.rpmWarn,'warn'],[CFG.rpmCrit,'crit']],cur:[[CFG.curWarnMa,'warn'],[CFG.curCritMa,'crit']],vib:[[CFG.vibWarn,'warn'],[CFG.vibCrit,'crit']]};
-  const max={rpm:CFG.rpmMax,cur:CFG.curMaxMa,vib:CFG.vibMax};
-  for(const k in defs){
-    let h='';
-    for(const [v,t] of defs[k]){
-      if(!(v>0)||v>max[k]) continue;
-      const f=v/max[k], [x1,y1]=polar(f,43), [x2,y2]=polar(f,58);
-      h+='<line class="tick" x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="'+(t==='warn'?cssv('--warn'):cssv('--crit'))+'"/>';
+/* ====================== SHA-256 / HMAC (fallback when crypto.subtle is unavailable) ====================== */
+const K=[], H0=[];
+(function(){ let n=2,c=0; while(c<64){ let p=true; for(let i=2;i*i<=n;i++) if(n%i===0){p=false;break}
+  if(p){ if(c<8) H0.push(Math.floor((Math.pow(n,.5)%1)*2**32)>>>0); K.push(Math.floor((Math.pow(n,1/3)%1)*2**32)>>>0); c++ } n++ } })();
+function sha256(m){
+  const l=m.length, nb=(l+9+63)>>6, b=new Uint8Array(nb*64); b.set(m); b[l]=0x80;
+  const dv=new DataView(b.buffer); dv.setUint32(b.length-4,(l*8)>>>0); dv.setUint32(b.length-8,Math.floor(l*8/2**32));
+  let h=H0.slice(); const W=new Uint32Array(64), R=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<b.length;o+=64){
+    for(let i=0;i<16;i++) W[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){ const s0=R(W[i-15],7)^R(W[i-15],18)^(W[i-15]>>>3), s1=R(W[i-2],17)^R(W[i-2],19)^(W[i-2]>>>10); W[i]=(W[i-16]+s0+W[i-7]+s1)>>>0; }
+    let [a,bb,c,d,e,f,g,hh]=h;
+    for(let i=0;i<64;i++){
+      const S1=R(e,6)^R(e,11)^R(e,25), ch=(e&f)^(~e&g), t1=(hh+S1+ch+K[i]+W[i])>>>0;
+      const S0=R(a,2)^R(a,13)^R(a,22), mj=(a&bb)^(a&c)^(bb&c), t2=(S0+mj)>>>0;
+      hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=bb;bb=a;a=(t1+t2)>>>0;
     }
-    gauges[k].ticks.innerHTML=h;
+    h=[h[0]+a,h[1]+bb,h[2]+c,h[3]+d,h[4]+e,h[5]+f,h[6]+g,h[7]+hh].map(x=>x>>>0);
   }
+  const out=new Uint8Array(32), ov=new DataView(out.buffer); h.forEach((x,i)=>ov.setUint32(i*4,x)); return out;
 }
-function setGauge(key,value,max,text,lv){
-  const g=gauges[key];
-  g.root.classList.remove('lv-0','lv-1','lv-2');
-  if(lv>=0 && lv<=2) g.root.classList.add('lv-'+lv);
-  if(text===null){ g.num.textContent='\u2014'; g.fg.setAttribute('stroke-dashoffset',ARC); g.pill.textContent='NO DATA'; return; }
-  g.num.textContent=text;
-  g.fg.setAttribute('stroke-dashoffset', (ARC*(1-clamp(value/max,0,1))).toFixed(1));
-  g.pill.textContent = lv===-1 ? 'INVALID' : lv===0 ? 'OK' : lv===1 ? 'WARNING' : 'CRITICAL';
+function hmacSha256(key,msg){
+  if(key.length>64) key=sha256(key);
+  const kk=new Uint8Array(64); kk.set(key);
+  const ip=new Uint8Array(64+msg.length), op=new Uint8Array(96);
+  for(let i=0;i<64;i++){ ip[i]=kk[i]^0x36; op[i]=kk[i]^0x5c }
+  ip.set(msg,64); op.set(sha256(ip),64); return sha256(op);
 }
-
-/* ============================== classification ========================= */
-function evaluate(t, now){
-  const res=[]; const ch={rpm:0,cur:0,vib:0};
-  const cur=t.cur;   // mA
-  const lv=(v,w,c)=>(c>0&&v>=c)?2:(w>0&&v>=w)?1:0;
-  // current
-  if(t.flags&FLAG.CUR_RANGE){ ch.cur=-1; res.push({ch:'cur',lv:-1,msg:'Current ADC out of range (check sensor wiring/scaling)'}); }
-  else { const l=lv(cur,CFG.curWarnMa,CFG.curCritMa); ch.cur=l;
-    if(l) res.push({ch:'cur',lv:l,msg:'Current '+cur+' mA \u2265 '+(l===2?CFG.curCritMa:CFG.curWarnMa)+' mA'}); }
-  if(t.flags&FLAG.TRIP){ ch.cur=2; res.push({ch:'cur',lv:2,msg:'Over-current trip active \u2014 motor disabled by ESP32'}); }
-  // vibration
-  if(t.vib!=null){ const l=lv(t.vib,CFG.vibWarn,CFG.vibCrit); ch.vib=l;
-    if(l) res.push({ch:'vib',lv:l,msg:'Vibration '+t.vib+' mV p-p \u2265 '+(l===2?CFG.vibCrit:CFG.vibWarn)+' mV'}); }
-  if(t.flags&FLAG.VIB_CLIP){ ch.vib=Math.max(ch.vib,1); res.push({ch:'vib',lv:1,msg:'Vibration channel clipping (check gain / bias)'}); }
-  // speed
-  { const l=lv(t.rpm,CFG.rpmWarn,CFG.rpmCrit); ch.rpm=l;
-    if(l) res.push({ch:'rpm',lv:l,msg:'Speed '+t.rpm+' rpm \u2265 '+(l===2?CFG.rpmCrit:CFG.rpmWarn)+' rpm'}); }
-  if(t.mode===1 && t.target>0){
-    if(ST.lastMode!==1 || ST.lastTarget!==t.target) ST.closedSince=now;
-    if(now-ST.closedSince>4000){
-      const e=Math.abs(t.target-t.rpm)/t.target*100;
-      const l=lv(e,CFG.errWarn,CFG.errCrit); ch.rpm=Math.max(ch.rpm,l);
-      if(l) res.push({ch:'rpm',lv:l,msg:'Speed error '+e.toFixed(0)+' % from target '+t.target+' rpm'});
-    }
+const toHex = u8 => Array.from(u8,x=>x.toString(16).padStart(2,'0')).join('');
+async function hmacHex(key,msg){
+  const enc=new TextEncoder();
+  if(window.crypto && crypto.subtle){
+    try{
+      const k=await crypto.subtle.importKey('raw',enc.encode(key),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+      return toHex(new Uint8Array(await crypto.subtle.sign('HMAC',k,enc.encode(msg))));
+    }catch(e){}
   }
-  ST.lastMode=t.mode; ST.lastTarget=t.target;
-  if(t.flags&FLAG.STALL){ ch.rpm=2; res.push({ch:'rpm',lv:2,msg:'Stall suspected: PWM applied but no IR pulses'}); }
-  const raw=res.reduce((m,r)=>Math.max(m,r.lv<0?1:r.lv),0);
-  return {raw,res,ch};
+  return toHex(hmacSha256(enc.encode(key),enc.encode(msg)));
 }
 
-function updateState(ev, now){
-  const prev=ST.eff;
-  ST.c1 = ev.raw>=1 ? ST.c1+1 : 0;
-  ST.c2 = ev.raw>=2 ? ST.c2+1 : 0;
-  if(ST.c2>=CFG.critN) ST.eff=2;
-  else if(ST.c1>=CFG.warnN && ST.eff<1) ST.eff=1;
-  if(ev.raw>=ST.eff){ ST.belowSince=0; }
-  else if(ST.eff>ev.raw){
-    if(!ST.belowSince) ST.belowSince=now;
-    if(now-ST.belowSince>=CFG.holdS*1000){ ST.eff=ev.raw; ST.belowSince=0; }
-  }
-  ST.reasons = ev.res.filter(r=>(r.lv<0?1:r.lv)>=Math.max(1,ST.eff)).map(r=>r.msg);
-  if(ST.eff!==prev){
-    const why = ev.res.length? ev.res.map(r=>r.msg).join('; ') : 'readings back within limits';
-    addAlert(ST.eff, 'State '+LEVEL_NAME[prev]+' \u2192 '+LEVEL_NAME[ST.eff]+': '+why);
-    if(ST.eff>prev) notify(ST.eff);
-    if(ST.eff!==2) ST.acked=false;
-  }
+/* ====================== state ====================== */
+function makeSid(){
+  try{ const s=sessionStorage.getItem('ms_sid'); if(s&&/^[A-Za-z0-9]{8}$/.test(s)) return s; }catch(e){}
+  const a=new Uint8Array(8); crypto.getRandomValues(a);
+  const s=Array.from(a,x=>'abcdefghijkmnpqrstuvwxyz23456789'[x%32]).join('');
+  try{ sessionStorage.setItem('ms_sid',s) }catch(e){}
+  return s;
 }
+const S = { conn:'off', T:null, ts:0, stale:false, esp:'', nonce:null, key:'', sid:makeSid(), haveCtl:false, hold:0 };
+let mqttClient=null, userDisc=false;
+let queue=[], cur=null, busy=false, seq=Math.floor(Math.random()*1e6)+1000;
 
-/* ============================== alerts ================================= */
+/* ====================== log ====================== */
 const LOG=[];
-function addAlert(level,text){
-  LOG.unshift({t:hhmmss(),level,text}); if(LOG.length>200) LOG.pop();
-  renderLog();
-}
-function renderLog(){
+function log(text,warn){
+  LOG.unshift({t:hhmmss(),text,warn:!!warn}); if(LOG.length>80) LOG.pop();
   const ul=$('log'); ul.textContent='';
-  if(!LOG.length){ const li=document.createElement('li'); li.className='empty'; li.textContent='No events yet.'; ul.appendChild(li); return; }
   for(const e of LOG){
-    const li=document.createElement('li');
+    const li=document.createElement('li'); if(e.warn) li.className='w';
     const tm=document.createElement('time'); tm.textContent=e.t;
-    const tg=document.createElement('span'); tg.className='tag l'+e.level; tg.textContent=['INFO','WARN','CRIT'][e.level];
     const tx=document.createElement('span'); tx.textContent=e.text;
-    li.append(tm,tg,tx); ul.appendChild(li);
+    li.append(tm,tx); ul.appendChild(li);
   }
 }
-let actx=null;
-function beep(freq,dur,when){
-  if(!actx) return;
-  const o=actx.createOscillator(), g=actx.createGain();
-  o.frequency.value=freq; o.type='square'; g.gain.value=0.06;
-  o.connect(g); g.connect(actx.destination);
-  const t0=actx.currentTime+(when||0); o.start(t0); o.stop(t0+dur);
-}
-function notify(level){
-  if(CFG.sound){ if(level===2){beep(880,.18,0);beep(660,.18,.25);beep(880,.18,.5)} else {beep(520,.2,0)} }
-  if(CFG.haptic && navigator.vibrate){ try{ navigator.vibrate(level===2?[300,120,300,120,300]:[200]) }catch(e){} }
-}
-function ensureAudio(){
-  try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){}
-}
-document.addEventListener('pointerdown', ensureAudio, {once:false, passive:true});
 
-/* ============================== rendering ============================== */
-function renderBanner(){
-  const b=$('banner'); b.className='banner';
-  let lvl, label, why, ico;
-  if(ST.conn==='disconnected'||ST.conn==='connecting'){
-    lvl='off'; label= ST.conn==='connecting'?'CONNECTING':'OFFLINE'; ico='\u23FB';
-    why= ST.conn==='connecting'?'Establishing connection\u2026':'Connect via MQTT or Bluetooth, or start Demo mode.';
-  } else if(!ST.T){ lvl='off'; label='WAITING'; ico='\u2026'; why= ST.conn==='mqtt' ? 'Connected to the broker \u2014 waiting for telemetry from the ESP32 (is it powered and on Wi-Fi?).' : 'Connected \u2014 waiting for the first telemetry packet.'; }
-  else if(ST.stale){ lvl='off'; label='DATA STALE'; ico='!'; why='No telemetry for more than '+CFG.staleS+' s. Values below are not live.'; }
-  else {
-    lvl=ST.eff; label=LEVEL_NAME[ST.eff]; ico= ST.eff===0?'\u2713': ST.eff===1?'!':'\u2715';
-    why = ST.eff===0 ? 'All channels within the configured limits.' : (ST.reasons.join(' \u2022 ')||'Readings recovered; holding this state briefly before release.');
-  }
-  b.classList.add('lv-'+lvl);
-  $('bIco').textContent=ico; $('bLbl').textContent=label; $('bWhy').textContent=why;
-  const showCrit = live() && ST.eff===2 && !ST.acked;
-  $('critBar').classList.toggle('hidden', !showCrit);
-  if(showCrit) $('critText').textContent='CRITICAL: '+(ST.reasons[0]||'check motor');
+/* ====================== command channel ======================
+   Wire format:  id|sid|op|val|nonce|hmac   (hmac = HMAC-SHA256(key, "id|sid|op|val|nonce"))
+   Commands are sent one at a time; the ESP32 answers with ack=id and a fresh nonce.            */
+function enqueue(op,val,silent){
+  if(S.conn!=='mqtt'){ if(!silent) log('Not connected.',true); return; }
+  if(!S.key){ log('Enter the owner key first.',true); return; }
+  const it={op,val:String(val),tries:0};
+  if(op==='duty') queue=queue.filter(q=>q.op!=='duty');
+  if(op==='off'||op==='rel'){ queue=queue.filter(q=>q.op!=='on'&&q.op!=='duty'); queue.unshift(it); }   // stop jumps the queue
+  else queue.push(it);
+  pump();
 }
+async function pump(){
+  if(busy||!queue.length||S.conn!=='mqtt'||!S.nonce||!S.key) return;
+  busy=true;
+  const it=queue[0], id=++seq, line=[id,S.sid,it.op,it.val,S.nonce].join('|');
+  let sig; try{ sig=await hmacHex(S.key,line) }catch(e){ busy=false; queue.length=0; log('Could not sign the command.',true); return; }
+  if(!mqttClient||S.conn!=='mqtt'){ busy=false; return; }
+  cur={id,item:it,timer:setTimeout(()=>onTimeout(id),ACK_MS)};
+  mqttClient.publish(T_CMD,line+'|'+sig);
+}
+function drop(it){ const i=queue.indexOf(it); if(i>=0) queue.splice(i,1); }
+function retry(it,why){
+  it.tries++;
+  if(it.tries>=MAX_TRIES){ drop(it); log('Command "'+it.op+'" failed: '+why+'.',true); }
+}
+function onTimeout(id){
+  if(!cur||cur.id!==id) return;
+  const it=cur.item; cur=null; busy=false; retry(it,'no reply from the ESP32'); render(); pump();
+}
+function onAck(res){
+  const c=cur; clearTimeout(c.timer); cur=null; busy=false;
+  const it=c.item;
+  if(res===0){
+    drop(it);
+    if(it.op==='rel'){ S.haveCtl=false; log('Control released. The ESP32 stops the motor.'); }
+    else if(!S.haveCtl){ S.haveCtl=true; log('You have control of the motor.'); }
+  } else if(res===3){ retry(it,'stale nonce'); }
+  else if(res===2){ queue.length=0; S.haveCtl=false; log('Another owner session is active. Wait about 12 s for it to expire, then take control again.',true); }
+  else if(res===1){ queue.length=0; S.haveCtl=false; log('Rejected: wrong owner key, or OWNER_KEY is still empty in the firmware.',true); }
+  else { drop(it); log('Command "'+it.op+'" rejected: invalid value.',true); }
+  render(); pump();
+}
+setInterval(()=>{ if(S.haveCtl&&S.conn==='mqtt'&&!busy&&!queue.length) enqueue('hb',0,true); },HB_MS);
 
-function render(){
-  renderBanner();
-  const ok=live();
-  const t=ST.T;
-  if(!ok){
-    for(const k of ['rpm','cur','vib']) setGauge(k,0,1,null,-9);
-    $('age').textContent='';
-  } else {
-    const ch=ST.chLv;
-    setGauge('rpm',t.rpm,CFG.rpmMax,String(t.rpm),ch.rpm);
-    setGauge('cur',t.cur,CFG.curMaxMa,String(t.cur),ch.cur);
-    if(t.vib==null) setGauge('vib',0,1,null,-9); else setGauge('vib',t.vib,CFG.vibMax,String(t.vib),ch.vib);
-  }
-  // control panel state
-  const canCtl = ST.conn==='connected'||ST.conn==='demo';
-  for(const id of ['btnStop','btnApply','btnReset','duty','tgt','dirF','dirR']) $(id).disabled=!canCtl;
-  document.querySelectorAll('#quickDuty .btn').forEach(b=>b.disabled=!canCtl);
-  const lk = linked();
-  $('ctlNote').textContent = ST.conn==='mqtt' ? 'MQTT mode is read-only: this page only receives readings. Controls are disabled.' : canCtl ? (ST.conn==='demo'?'Demo mode: commands drive the simulator only.':'Commands are sent to the ESP32 over Bluetooth.') : 'Controls are disabled until a device is connected.';
-  if(t && lk){
-    const modeTxt=t.mode===1?'closed loop, target <b>'+t.target+' rpm</b>':'open loop';
-    $('rep').innerHTML='ESP32 reports: <b>'+modeTxt+'</b> \u2022 PWM <b>'+t.duty+' %</b> \u2022 <b>'+(t.dir?'reverse':'forward')+'</b>'+(ok?'':' (stale)');
-    $('dirF').setAttribute('aria-pressed',String(!t.dir)); $('dirR').setAttribute('aria-pressed',String(!!t.dir));
-    $('chipDir').textContent='Direction: '+(t.dir?'reverse':'forward');
-    $('btnReset').classList.toggle('hidden', !(t.flags&FLAG.TRIP));
-  } else { $('rep').textContent='ESP32 reports: \u2014'; $('chipDir').textContent='Direction: \u2014'; $('btnReset').classList.add('hidden'); }
-  $('thrNote').classList.toggle('hidden', CFG.calibrated);
-}
-
-/* ============================== illustration =========================== */
-let ang=0, lastF=performance.now(), irOn=false, irFlash=0, dash=0;
-function animate(now){
-  const dt=Math.min(0.1,(now-lastF)/1000); lastF=now;
-  const ok=live(), t=ST.T;
-  const rpm= ok? t.rpm:0;
-  const vf = rpm>0 ? 0.25+1.75*clamp(rpm/CFG.rpmMax,0,1) : 0;           // visual rev/s (scaled)
-  const dirSign = (t&&t.dir)?-1:1;
-  ang=(ang+dirSign*vf*360*dt)%360;
-  $('diskG').setAttribute('transform','translate(292 124) rotate('+ang.toFixed(1)+')');
-  // strip passes the sensor when its angle is near 0 (top)
-  const a=((ang%360)+360)%360, near = a<14||a>346;
-  if(near && rpm>0){ irFlash=0.12; }
-  irFlash=Math.max(0,irFlash-dt);
-  const on=irFlash>0;
-  if(on!==irOn){ irOn=on;
-    $('irLed').setAttribute('fill', on? cssv('--ok'): cssv('--off'));
-    $('irBeam').setAttribute('opacity', on? '.7':'.15');
-    $('chipIR').classList.toggle('on', on);
-  }
-  // vibration shake
-  const vr = ok? clamp((t.vib||0)/CFG.vibMax,0,1):0;
-  const amp=vr*3.2;
-  $('motorG').setAttribute('transform','translate('+((Math.random()-.5)*amp).toFixed(2)+' '+((Math.random()-.5)*amp).toFixed(2)+')');
-  $('vibRings').setAttribute('opacity', (vr*0.9).toFixed(2));
-  // current flow
-  const cr = ok? clamp(t.cur/CFG.curMaxMa,0,1):0;
-  dash=(dash+ (cr>0? 12+70*cr:0)*dt)%12;
-  const ccol= ok? (ST.chLv.cur===2?cssv('--crit'):ST.chLv.cur===1?cssv('--warn'):cssv('--ok')) : cssv('--off');
-  for(const id of ['flowA','flowB']){ const p=$(id); p.setAttribute('stroke-dashoffset',(-dash).toFixed(1)); p.setAttribute('stroke',ccol); p.setAttribute('opacity', cr>0?'1':'.25'); }
-  // motor tint
-  const fill = !ok? cssv('--offbg') : ST.eff===2? cssv('--critbg'): ST.eff===1? cssv('--warnbg'): cssv('--okbg');
-  $('motorBody').setAttribute('fill',fill);
-  requestAnimationFrame(animate);
-}
-
-/* ============================== charts ================================= */
-function drawChart(cv,arr,max,color,lines){
-  const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
-  if(!w) return;
-  if(cv.width!==Math.round(w*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
-  const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
-  let m=max; for(const p of arr) if(p.v>m) m=p.v*1.1;
-  const now=performance.now(), win=60000, padL=34, padB=14, pw=w-padL-4, ph=h-padB-6;
-  const Y=v=>6+ph*(1-v/m), X=t=>padL+pw*(1-(now-t)/win);
-  c.strokeStyle=cssv('--line'); c.fillStyle=cssv('--mute'); c.font='10px system-ui'; c.lineWidth=1;
-  for(let i=0;i<=2;i++){ const v=m*i/2, y=Y(v); c.beginPath(); c.moveTo(padL,y); c.lineTo(w-4,y); c.stroke(); c.fillText(v>=100?v.toFixed(0):v.toFixed(1),2,y+3); }
-  c.fillText('-60 s',padL,h-3); c.fillText('now',w-24,h-3);
-  c.setLineDash([4,3]);
-  for(const [v,col] of lines){ if(v>0&&v<=m){ c.strokeStyle=cssv(col); c.beginPath(); c.moveTo(padL,Y(v)); c.lineTo(w-4,Y(v)); c.stroke(); } }
-  c.setLineDash([]);
-  if(arr.length>1){
-    c.strokeStyle=color; c.lineWidth=2; c.beginPath(); let started=false, prevT=0;
-    for(const p of arr){ if(now-p.t>win) continue; const x=X(p.t), y=Y(p.v);
-      if(!started||p.t-prevT>1500){ c.moveTo(x,y); started=true } else c.lineTo(x,y); prevT=p.t; }
-    c.stroke();
-  }
-}
-function drawCharts(){
-  const acc=cssv('--accent');
-  drawChart($('chRpm'),H.rpm,CFG.rpmMax,acc,[[CFG.rpmWarn,'--warn'],[CFG.rpmCrit,'--crit']]);
-  drawChart($('chCur'),H.cur,CFG.curMaxMa,acc,[[CFG.curWarnMa,'--warn'],[CFG.curCritMa,'--crit']]);
-  drawChart($('chVib'),H.vib,CFG.vibMax,acc,[[CFG.vibWarn,'--warn'],[CFG.vibCrit,'--crit']]);
-}
-
-/* ============================== data path ============================== */
-function onSample(t){
-  const now=performance.now();
-  t.ts=now; ST.T=t;
-  if(ST.stale){ ST.stale=false; addAlert(0,'Telemetry resumed.'); }
-  const push=(a,v)=>{a.push({t:now,v}); if(a.length>650)a.shift()};
-  push(H.rpm,t.rpm); push(H.cur,t.cur); if(t.vib!=null) push(H.vib,t.vib);
-  // flag change events
-  const nf=t.flags&~ST.prevFlags, cf=ST.prevFlags&~t.flags;
-  if(nf&FLAG.CUR_RANGE) addAlert(1,'Current sensor ADC out of range.');
-  if(nf&FLAG.STALL)     addAlert(2,'Stall suspected: no IR pulses while PWM is applied.');
-  if(nf&FLAG.VIB_CLIP)  addAlert(1,'Vibration channel clipping.');
-  if(nf&FLAG.TRIP)      addAlert(2,'Over-current protection tripped; motor disabled.');
-  if(cf) addAlert(0,'Fault flag(s) cleared (0x'+cf.toString(16)+').');
-  ST.prevFlags=t.flags;
-  const ev=evaluate(t,now); ST.chLv=ev.ch; updateState(ev,now);
-  if(!ST.tabSynced){ ST.tabSynced=true; setTab(t.mode===1?'closed':'open'); }
-  if(REC.on && REC.rows.length<36000) REC.rows.push([new Date().toISOString(),t.rpm,t.cur,(t.vib==null?'':t.vib),t.duty,t.mode,t.dir,t.flags,LEVEL_NAME[ST.eff]]);
-  render(); drawCharts();
-  if(REC.on) $('recNote').textContent='Recording: '+REC.rows.length+' samples.';
-}
-function parsePacket(dv){
-  if(dv.byteLength<12) return null;
-  return { rpm:dv.getUint16(0,true), cur:dv.getUint16(2,true), vib:dv.getUint16(4,true),
-           duty:dv.getUint8(6), mode:dv.getUint8(7), dir:dv.getUint8(8), flags:dv.getUint8(9), target:dv.getUint16(10,true) };
-}
-setInterval(()=>{
-  const now=performance.now();
-  if(linked() && ST.T){
-    const age=now-ST.T.ts;
-    if(!ST.stale && age>CFG.staleS*1000){
-      ST.stale=true; ST.c1=0; ST.c2=0; addAlert(1,'No telemetry for '+CFG.staleS+' s \u2014 data is stale.'); notify(1);
-    }
-    if(!ST.stale) $('age').textContent='\u2022 updated '+(age/1000).toFixed(1)+' s ago';
-    render();
-  }
-  drawCharts();
-},500);
-
-/* ============================== Bluetooth ============================== */
-function setConn(c){
-  ST.conn=c;
-  const chip=$('connChip'); chip.className='chip';
-  const txt={disconnected:'Disconnected',connecting:'Connecting\u2026',connected:'Connected (BLE)',mqtt:'Connected (MQTT)',demo:'DEMO \u2013 simulated'}[c];
-  if(c==='connected'||c==='mqtt') chip.classList.add('on'); if(c==='connecting') chip.classList.add('busy'); if(c==='demo') chip.classList.add('demo');
-  $('connText').textContent=txt;
-  $('btnConnect').textContent = c==='connected'?'Disconnect': (c==='connecting'&&!mqttClient)?'Connecting\u2026':'Connect ESP32';
-  $('btnConnect').disabled = (c==='connecting'||c==='demo'||c==='mqtt');
-  $('btnDemo').setAttribute('aria-pressed',String(c==='demo')); $('btnDemo').textContent = c==='demo'?'Stop demo':'Demo mode';
-  $('btnDemo').disabled = (c==='connected'||c==='connecting'||c==='mqtt');
-  $('btnAll').disabled = (c!=='disconnected');
-  const mq = (c==='mqtt'||(c==='connecting'&&!!mqttClient));
-  $('btnMqtt').textContent = mq ? 'Disconnect MQTT' : 'Connect via MQTT';
-  $('btnMqtt').disabled = (c==='connected'||c==='demo'||(c==='connecting'&&!mqttClient));
-  $('demoCard').classList.toggle('hidden', c!=='demo');
-  render();
-}
-function resetLive(){ ST.T=null; ST.stale=false; ST.eff=0; ST.c1=ST.c2=0; ST.belowSince=0; ST.acked=false; ST.prevFlags=0; ST.tabSynced=false; ST.lastMode=-1; H.rpm.length=H.cur.length=H.vib.length=0; }
-
-async function openGatt(){
-  const server=await bleDev.gatt.connect();
-  const svc=await server.getPrimaryService(UUID_SVC);
-  bleTel=await svc.getCharacteristic(UUID_TEL);
-  bleCmd=await svc.getCharacteristic(UUID_CMD);
-  bleTel.addEventListener('characteristicvaluechanged', onTelem);
-  await bleTel.startNotifications();
-}
-function onTelem(e){ const p=parsePacket(e.target.value); if(p) onSample(p); }
-async function bleConnect(all){
-  if(!navigator.bluetooth){ showSupport(); return; }
-  try{
-    setConn('connecting'); userDisc=false;
-    bleDev = await navigator.bluetooth.requestDevice(
-      all ? {acceptAllDevices:true, optionalServices:[UUID_SVC]}
-          : {filters:[{services:[UUID_SVC]}], optionalServices:[UUID_SVC]});
-    bleDev.addEventListener('gattserverdisconnected', onGattDown);
-    resetLive();
-    await openGatt();
-    setConn('connected'); addAlert(0,'Connected to '+(bleDev.name||'device')+'.');
-    requestWake();
-  }catch(err){
-    setConn('disconnected');
-    if(err && err.name==='NotFoundError'){
-      addAlert(0,'No device selected. If the ESP32 was not listed, use "Show all Bluetooth devices" and pick MotorStation.');
-    } else addAlert(1,'Bluetooth: '+(err&&err.message?err.message:err));
-  }
-}
-async function onGattDown(){
-  bleCmd=null; bleTel=null;
-  if(userDisc){ setConn('disconnected'); addAlert(0,'Disconnected.'); return; }
-  addAlert(2,'Bluetooth link lost. ESP32 stops the motor on disconnect (firmware default). Trying to reconnect\u2026');
-  notify(2); setConn('connecting'); ST.stale=true;
-  if(reconnecting) return; reconnecting=true;
-  for(let i=1;i<=6 && !userDisc;i++){
-    await new Promise(r=>setTimeout(r,2000));
-    try{ await openGatt(); reconnecting=false; setConn('connected'); addAlert(0,'Reconnected.'); return; }catch(e){}
-  }
-  reconnecting=false; setConn('disconnected'); addAlert(1,'Reconnect failed. Tap Connect ESP32.');
-}
-function bleDisconnect(){ userDisc=true; try{ if(bleDev&&bleDev.gatt.connected) bleDev.gatt.disconnect(); }catch(e){} setConn('disconnected'); }
-function showSupport(){
-  const n=$('supportNote'); n.classList.remove('hidden');
-  n.innerHTML='<b>Web Bluetooth is not available in this browser.</b> Use Chrome or Edge on Android or on a desktop computer (open this file from an https:// address or file://). iPhone Safari does not support Web Bluetooth; a Web-Bluetooth-capable iOS browser such as Bluefy is required. MQTT and Demo modes work in any browser.';
-}
-
-/* ============================== MQTT (WebSocket) ======================= */
-// Incoming JSON is untrusted (public broker): every field is coerced to a bounded number.
-function mqttPacket(raw){
+/* ====================== telemetry ====================== */
+function parseTel(raw){
   let j; try{ j=JSON.parse(raw) }catch(e){ return null }
-  if(!j || typeof j!=='object') return null;
-  const n=(v,lo,hi)=>{ v=Number(v); return Number.isFinite(v)? clamp(Math.round(v),lo,hi) : null };
-  const rpm=n(j.rpm,0,65535), cur=n(j.cur,0,65535);
-  if(rpm===null || cur===null) return null;
-  return { rpm, cur, vib:(j.vib==null?null:n(j.vib,0,65535)),
-           duty:n(j.duty,0,100)||0, mode:n(j.mode,0,1)||0, dir:n(j.dir,0,1)||0,
-           flags:n(j.flags,0,255)||0, target:n(j.target,0,65535)||0 };
+  if(!j||typeof j!=='object') return null;
+  const n=(v,lo,hi)=>{ v=Number(v); return Number.isFinite(v)?Math.min(hi,Math.max(lo,Math.round(v))):null };
+  const cur=n(j.cur,0,65535); if(cur===null) return null;
+  return { rpm:(j.rpm==null?null:n(j.rpm,0,65535)), rw:n(j.rw,0,999)||0, cur,
+           duty:n(j.duty,0,100)||0, cd:n(j.cd,0,100)||0, dir:n(j.dir,0,1)||0, on:n(j.on,0,1)||0,
+           own:n(j.own,0,1)||0, flags:n(j.flags,0,255)||0,
+           nonce:(typeof j.n==='string'&&/^[0-9a-f]{8}$/.test(j.n))?j.n:null,
+           ack:n(j.ack,0,4294967295), res:n(j.res,0,9) };
 }
+function onTelemetry(t){
+  S.T=t; S.ts=performance.now();
+  if(t.nonce) S.nonce=t.nonce;
+  if(S.stale){ S.stale=false; log('Telemetry resumed.'); }
+  if(cur && t.ack===cur.id) onAck(t.res);
+  if(S.haveCtl && !cur && !t.own){ S.haveCtl=false; log('Control lost: owner session expired.',true); }
+  if(performance.now()>S.hold && !queue.some(q=>q.op==='duty') && !(cur&&cur.item.op==='duty')){
+    $('duty').value=t.cd; $('dutyVal').textContent=t.cd;
+  }
+  render(); pump();
+}
+
+/* ====================== MQTT ====================== */
+function setConn(c){ S.conn=c; render(); }
 function mqttConnect(){
-  if(typeof mqtt==='undefined'){ addAlert(1,'MQTT library did not load (this page needs internet access to load it).'); return; }
+  if(typeof mqtt==='undefined'){ log('MQTT library did not load (internet access needed).',true); return; }
   userDisc=false;
   let c;
-  try{
-    c = mqtt.connect(MQTT_URL,{clientId:'motorstation-web-'+Math.random().toString(16).slice(2,10),
-                               clean:true, reconnectPeriod:3000, connectTimeout:8000, keepalive:30});
-  }catch(e){ addAlert(1,'MQTT: '+(e&&e.message?e.message:e)); return; }
-  mqttClient=c; resetLive(); setConn('connecting');
+  try{ c=mqtt.connect(MQTT_URL,{clientId:'motorstation-web-'+Math.random().toString(16).slice(2,10),clean:true,reconnectPeriod:3000,connectTimeout:8000,keepalive:30}); }
+  catch(e){ log('MQTT: '+(e&&e.message?e.message:e),true); return; }
+  mqttClient=c; S.T=null; S.stale=false; S.nonce=null; S.esp=''; S.haveCtl=false; queue=[]; cur=null; busy=false;
+  setConn('connecting');
   c.on('connect',()=>{
     if(c!==mqttClient) return;
-    c.subscribe([MQTT_TOPIC_TEL,MQTT_TOPIC_STATUS],{qos:0},err=>{ if(err) addAlert(1,'MQTT subscribe failed: '+err.message); });
-    setConn('mqtt'); addAlert(0,'Connected to MQTT broker. Listening on '+MQTT_TOPIC_TEL+'.'); requestWake();
+    c.subscribe([T_TEL,T_ST],{qos:0},err=>{ if(err) log('Subscribe failed: '+err.message,true); });
+    setConn('mqtt'); log('Connected to the MQTT broker.');
   });
   c.on('message',(topic,payload)=>{
     if(c!==mqttClient) return;
     const s=payload.toString();
-    if(topic===MQTT_TOPIC_TEL){ if(s.length>400) return; const p=mqttPacket(s); if(p) onSample(p); }
-    else if(topic===MQTT_TOPIC_STATUS){ addAlert(s==='online'?0:1,'ESP32 status: '+(s==='online'||s==='offline'?s:'unknown')); }
+    if(topic===T_TEL){ if(s.length<=600){ const t=parseTel(s); if(t) onTelemetry(t); } }
+    else if(topic===T_ST){ S.esp=(s==='online'||s==='offline')?s:''; log('ESP32 is '+(S.esp||'unknown')+'.',S.esp!=='online'); render(); }
   });
   c.on('close',()=>{
-    if(c!==mqttClient || userDisc) return;
-    if(ST.conn==='mqtt'){ ST.stale=true; addAlert(1,'MQTT link lost. Reconnecting\u2026'); }
-    setConn('connecting');
+    if(c!==mqttClient||userDisc) return;
+    if(S.conn==='mqtt'){ S.stale=true; log('MQTT link lost. Reconnecting…',true); }
+    clearTimeout(cur&&cur.timer); cur=null; busy=false; queue=[]; S.haveCtl=false; setConn('connecting');
   });
-  c.on('error',e=>{ if(c===mqttClient) addAlert(1,'MQTT: '+(e&&e.message?e.message:e)); });
+  c.on('error',e=>{ if(c===mqttClient) log('MQTT: '+(e&&e.message?e.message:e),true); });
 }
 function mqttDisconnect(){
   userDisc=true; const c=mqttClient; mqttClient=null;
+  clearTimeout(cur&&cur.timer); cur=null; busy=false; queue=[];
   try{ if(c) c.end(true); }catch(e){}
-  resetLive(); setConn('disconnected'); addAlert(0,'MQTT disconnected.');
+  S.T=null; S.haveCtl=false; S.stale=false; setConn('off'); log('Disconnected.');
 }
 
-/* ============================== commands =============================== */
-function sendCmd(op,val){
-  if(ST.conn==='demo'){ SIM.handle(op,val); return; }
-  if(ST.conn==='mqtt'){ addAlert(1,'Read-only MQTT mode: command not sent.'); return; }
-  if(ST.conn!=='connected' || !bleCmd){ addAlert(1,'Command not sent: not connected.'); return; }
-  const b = op===OP.TARGET ? new Uint8Array([op,val&255,(val>>8)&255]) :
-            (op===OP.DUTY||op===OP.DIR) ? new Uint8Array([op,val&255]) : new Uint8Array([op]);
-  writeChain = writeChain.then(()=> bleCmd.writeValueWithResponse ? bleCmd.writeValueWithResponse(b) : bleCmd.writeValue(b))
-    .catch(e=>addAlert(1,'Command failed: '+(e&&e.message?e.message:e)));
-}
-function setTab(which){
-  $('tabOpen').setAttribute('aria-pressed',String(which==='open')); $('tabClosed').setAttribute('aria-pressed',String(which==='closed'));
-  $('paneOpen').classList.toggle('hidden',which!=='open'); $('paneClosed').classList.toggle('hidden',which!=='closed');
-}
-function setDuty(v,send){ $('duty').value=v; $('dutyVal').textContent=v; if(send) sendCmd(OP.DUTY,v); }
-function stopAll(){ setDuty(0,false); $('tgt').value=0; $('tgtVal').textContent=0; sendCmd(OP.STOP); addAlert(0,'STOP commanded by operator.'); }
+/* ====================== render ====================== */
+function render(){
+  const T=S.T, linked=S.conn==='mqtt', fresh=linked&&T&&!S.stale&&S.esp!=='offline';
+  const chip=$('chip'); chip.className='chip'+(linked?' on':S.conn==='connecting'?' busy':'');
+  $('chipT').textContent={off:'Disconnected',connecting:'Connecting…',mqtt:'Connected (MQTT)'}[S.conn];
+  $('btnConn').textContent=S.conn==='off'?'Connect':'Disconnect';
 
-/* ============================== simulator ============================== */
-const SIM = {
-  mode:0,duty:0,target:0,dir:0,rpm:0,int:0,spike:0,stallT:0,timer:null,
-  faults:{imb:false,over:false,stall:false,sensor:false},
-  handle(op,v){
-    if(op===OP.DUTY){ this.mode=0; this.target=0; this.duty=clamp(v,0,100); this.spike=0.9; }
-    else if(op===OP.TARGET){ if(v===0){this.handle(OP.STOP);return;} if(this.mode!==1) this.int=this.duty/0.05; this.mode=1; this.target=v; this.spike=0.9; }
-    else if(op===OP.STOP){ this.mode=0; this.duty=0; this.target=0; this.int=0; }
-    else if(op===OP.DIR){ const r=v?1:0; if(r!==this.dir){ this.mode=0; this.duty=0; this.target=0; this.int=0; this.dir=r; } }
-  },
-  step(){
-    const dt=0.1, MAX=3000;
-    if(this.mode===1){ const e=this.target-this.rpm; this.int=clamp(this.int+e*dt,0,100/0.05); this.duty=clamp(0.02*e+0.05*this.int,0,100); }
-    const ss = this.faults.stall?0: this.duty/100*MAX*(this.faults.over?0.85:1);
-    this.rpm += (ss-this.rpm)*(1-Math.exp(-dt/0.8)); if(this.rpm<1) this.rpm=0;
-    this.spike*=0.8;
-    const rn=()=>(Math.random()-.5);
-    let cur = (this.duty>0?0.25:0.02) + this.duty/100*1.4 + (this.faults.over?1.5:0) + (this.faults.stall&&this.duty>0?2.8:0) + this.spike*(this.duty/100)*2 + rn()*0.06;
-    let vib = 35 + (this.rpm/MAX)*260 + (this.faults.imb? 650*(this.rpm/MAX+0.25):0) + rn()*30;
-    if(this.duty>=25 && this.rpm===0){ this.stallT+=dt; } else this.stallT=0;
-    let flags=0; if(this.faults.sensor) flags|=FLAG.CUR_RANGE; if(this.stallT>=2) flags|=FLAG.STALL; if(vib>3250) flags|=FLAG.VIB_CLIP;
-    onSample({rpm:Math.round(this.rpm), cur:Math.round(Math.max(0,cur)*1000), vib:Math.round(Math.max(0,vib)),
-              duty:Math.round(this.duty), mode:this.mode, dir:this.dir, flags, target:this.target});
-  },
-  start(){ resetLive(); Object.assign(this,{mode:0,duty:0,target:0,dir:0,rpm:0,int:0,spike:0,stallT:0}); this.timer=setInterval(()=>this.step(),100); },
-  stop(){ clearInterval(this.timer); this.timer=null; for(const k in this.faults) this.faults[k]=false;
-          document.querySelectorAll('[data-fault]').forEach(b=>b.setAttribute('aria-pressed','false')); }
-};
+  let lvl='off',lbl,why,ico='!';
+  if(S.conn==='off'){ lbl='OFFLINE'; why='Press Connect to talk to the ESP32 through the MQTT broker.'; ico='\u23FB'; }
+  else if(S.conn==='connecting'){ lbl='CONNECTING'; why='Reaching the MQTT broker…'; ico='\u2026'; }
+  else if(!T){ lbl='WAITING'; why='Connected to the broker. Waiting for telemetry from the ESP32 (powered and on Wi-Fi?).'; ico='\u2026'; }
+  else if(S.esp==='offline'){ lbl='ESP32 OFFLINE'; why='The broker reports the ESP32 as offline. Values below are not live.'; }
+  else if(S.stale){ lbl='DATA STALE'; why='No telemetry for more than '+(STALE_MS/1000)+' s. Values below are not live.'; }
+  else if(T.flags&1){ lvl=1; lbl='SENSOR FAULT'; why='Current ADC out of range. Check the current sensor wiring.'; }
+  else if(T.on&&T.duty>0){ lvl=0; lbl='RUNNING'; why=T.duty+' % PWM, '+(T.dir?'reverse':'forward')+'.'; ico='\u2713'; }
+  else { lbl='STOPPED'; why=T.on?'Running state is set but speed is 0 %.':'Motor is stopped.'; ico='\u23FB'; }
+  $('banner').className='banner lv-'+lvl; $('bIco').textContent=ico; $('bLbl').textContent=lbl; $('bWhy').textContent=why;
 
-/* ============================== recording ============================== */
-function toggleRec(){
-  REC.on=!REC.on;
-  if(REC.on){ REC.rows=[]; $('recNote').textContent='Recording: 0 samples.'; $('btnRec').textContent='Stop recording'; $('btnCsv').disabled=true; }
-  else { $('btnRec').textContent='Start recording'; $('btnCsv').disabled=!REC.rows.length; $('recNote').textContent='Recorded '+REC.rows.length+' samples (kept until the next recording).'; }
+  $('rRpm').textContent = fresh&&T.rpm!=null ? T.rpm : '\u2014';
+  $('rRpmS').textContent = fresh&&T.rpm==null ? 'warming up, '+T.rw+' s left' : '';
+  $('rCur').textContent = fresh ? T.cur : '\u2014';
+  $('rDuty').textContent = fresh ? T.duty : '\u2014';
+  $('rDutyS').textContent = fresh ? 'command: '+T.cd+' %' : '';
+
+  const can=fresh&&S.haveCtl;
+  for(const id of ['btnOff','btnOn','duty','dirF','dirR','btnStop']) $(id).disabled=!can;
+  document.querySelectorAll('#quick .btn').forEach(b=>b.disabled=!can);
+  $('btnTake').disabled = !(linked&&S.nonce&&T);
+  $('btnTake').textContent = S.haveCtl?'Release control':'Take control';
+  $('btnTake').className = 'btn '+(S.haveCtl?'':'primary');
+  $('key').disabled = S.haveCtl;
+  $('ownNote').textContent = S.haveCtl ? 'You are the owner. A heartbeat keeps the session alive; the motor stops if the page closes or loses the link.'
+    : (T&&T.own&&linked) ? 'The motor is owned by another session (or this one before a reload). Take control to claim it once its lease expires.'
+    : 'Type the owner key and take control to drive the motor. The key stays in this page; commands are signed with it.';
+  if(T&&linked){
+    $('btnOn').setAttribute('aria-pressed',String(!!T.on)); $('btnOff').setAttribute('aria-pressed',String(!T.on));
+    $('dirF').setAttribute('aria-pressed',String(!T.dir)); $('dirR').setAttribute('aria-pressed',String(!!T.dir));
+    $('rep').innerHTML='ESP32 reports: state <b>'+(T.on?'running':'stopped')+'</b> \u2022 command <b>'+T.cd+' %</b> \u2022 applied <b>'+T.duty+' %</b> \u2022 <b>'+(T.dir?'reverse':'forward')+'</b> \u2022 owner <b>'+(T.own?'yes':'none')+'</b>'+(fresh?'':' (stale)');
+  } else $('rep').textContent='ESP32 reports: \u2014';
 }
-function downloadCsv(){
-  const head='time_iso,rpm,current_mA,vibration_mV_pp,duty_pct,mode(0=open,1=closed),dir(0=fwd,1=rev),flags,state\n';
-  const blob=new Blob([head+REC.rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='motor_station_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-}
+setInterval(()=>{
+  if(S.conn==='mqtt'&&S.T){
+    const age=performance.now()-S.ts;
+    if(!S.stale&&age>STALE_MS){ S.stale=true; log('No telemetry for '+(STALE_MS/1000)+' s: data is stale.',true); }
+    $('age').textContent=S.stale?'':'\u2022 updated '+(age/1000).toFixed(1)+' s ago';
+  } else $('age').textContent='';
+  render();
+},500);
 
-/* ============================== settings UI ============================ */
-function buildSettings(){
-  const g=$('settingsGrid'); g.textContent='';
-  for(const row of SCHEMA){
-    if(row.length===1){ const h=document.createElement('div'); h.className='sech'; h.textContent=row[0]; g.appendChild(h); continue; }
-    const [k,label,step]=row;
-    const l=document.createElement('label'); l.textContent=label;
-    const i=document.createElement('input'); i.type='number'; i.inputMode='decimal'; i.step=String(step); i.min='0'; i.value=CFG[k];
-    i.addEventListener('change',()=>{ const v=parseFloat(i.value); if(isFinite(v)&&v>=0){ CFG[k]=v; lsSet('ms_cfg',CFG); onCfg(); } else i.value=CFG[k]; });
-    l.appendChild(i); g.appendChild(l);
-  }
-  $('optCal').checked=CFG.calibrated; $('optSound').checked=CFG.sound; $('optHaptic').checked=CFG.haptic;
-}
-function onCfg(){
-  $('tgt').max=CFG.rpmMax; drawTicks(); render(); drawCharts();
-  if(CFG.warnN<1) CFG.warnN=1; if(CFG.critN<1) CFG.critN=1;
-}
-
-/* ============================== wake lock ============================== */
-let wl=null;
-async function requestWake(){ try{ if('wakeLock' in navigator && !wl){ wl=await navigator.wakeLock.request('screen'); wl.addEventListener('release',()=>{wl=null}); } }catch(e){} }
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && linked()) requestWake(); });
-
-/* ============================== wiring ================================= */
-['rpm','cur','vib'].forEach(buildGauge);
-(function quick(){ const q=$('quickDuty'); [0,25,50,75,100].forEach(v=>{ const b=document.createElement('button'); b.type='button'; b.className='btn'; b.textContent=v+'%'; b.addEventListener('click',()=>setDuty(v,true)); q.appendChild(b); }); })();
-
-$('btnConnect').addEventListener('click',()=>{ ensureAudio(); if(ST.conn==='connected') bleDisconnect(); else bleConnect(false); });
-$('btnMqtt').addEventListener('click',()=>{ ensureAudio(); if(mqttClient) mqttDisconnect(); else mqttConnect(); });
-$('btnAll').addEventListener('click',()=>{ ensureAudio(); if(ST.conn==='disconnected') bleConnect(true); });
-$('btnDemo').addEventListener('click',()=>{ ensureAudio();
-  if(ST.conn==='demo'){ SIM.stop(); resetLive(); setConn('disconnected'); addAlert(0,'Demo stopped.'); }
-  else { SIM.start(); setConn('demo'); addAlert(0,'Demo mode started (simulated data).'); requestWake(); }
+/* ====================== wiring ====================== */
+$('btnConn').addEventListener('click',()=>{ if(S.conn==='off') mqttConnect(); else mqttDisconnect(); });
+$('key').addEventListener('input',e=>{ S.key=e.target.value.trim(); render(); });
+$('btnTake').addEventListener('click',()=>{
+  S.key=$('key').value.trim();
+  if(S.haveCtl){ enqueue('rel',0); return; }
+  if(!S.key){ log('Enter the owner key first.',true); return; }
+  enqueue('hb',0);
 });
-$('tabOpen').addEventListener('click',()=>setTab('open'));
-$('tabClosed').addEventListener('click',()=>setTab('closed'));
-$('duty').addEventListener('input',e=>{ $('dutyVal').textContent=e.target.value; });
-$('duty').addEventListener('change',e=>{ sendCmd(OP.DUTY,parseInt(e.target.value,10)); });
-$('tgt').addEventListener('input',e=>{ $('tgtVal').textContent=e.target.value; });
-$('btnApply').addEventListener('click',()=>{ const v=parseInt($('tgt').value,10); if(v>0){ sendCmd(OP.TARGET,v); addAlert(0,'Closed-loop target set to '+v+' rpm.'); } else stopAll(); });
+$('btnOn').addEventListener('click',()=>enqueue('on',0));
+$('btnOff').addEventListener('click',()=>enqueue('off',0));
+$('btnStop').addEventListener('click',()=>{ enqueue('off',0); log('STOP commanded.'); });
+let dTimer=null;
+$('duty').addEventListener('input',e=>{
+  const v=parseInt(e.target.value,10); $('dutyVal').textContent=v; S.hold=performance.now()+3000;
+  clearTimeout(dTimer); dTimer=setTimeout(()=>enqueue('duty',v),250);
+});
+$('duty').addEventListener('change',e=>{ clearTimeout(dTimer); S.hold=performance.now()+3000; enqueue('duty',parseInt(e.target.value,10)); });
+[0,25,50,75,100].forEach(v=>{
+  const b=document.createElement('button'); b.type='button'; b.className='btn'; b.textContent=v+'%';
+  b.addEventListener('click',()=>{ $('duty').value=v; $('dutyVal').textContent=v; S.hold=performance.now()+3000; enqueue('duty',v); });
+  $('quick').appendChild(b);
+});
+function changeDir(d){
+  const T=S.T; if(!T||d===T.dir) return;
+  if(T.duty>0 && !confirm('Changing direction stops the motor and pauses 1.5 s. Continue?')) return;
+  enqueue('dir',d); log('Direction set to '+(d?'reverse':'forward')+'. Set Running again after the pause.');
+}
 $('dirF').addEventListener('click',()=>changeDir(0));
 $('dirR').addEventListener('click',()=>changeDir(1));
-function changeDir(d){
-  const cur=ST.T?ST.T.dir:0; if(d===cur) return;
-  if(ST.T && ST.T.rpm>0 && !confirm('Changing direction stops the motor first. Continue?')) return;
-  sendCmd(OP.DIR,d); setDuty(0,false); addAlert(0,'Direction set to '+(d?'reverse':'forward')+'; motor stopped. Re-apply speed once it has slowed down.');
-}
-$('btnStop').addEventListener('click',stopAll);
-$('btnReset').addEventListener('click',()=>{ sendCmd(OP.RESET); addAlert(0,'Over-current trip reset requested.'); });
-$('critAck').addEventListener('click',()=>{ ST.acked=true; renderBanner(); });
-$('btnClearLog').addEventListener('click',()=>{ LOG.length=0; renderLog(); });
-$('btnRec').addEventListener('click',toggleRec);
-$('btnCsv').addEventListener('click',downloadCsv);
-$('optSound').addEventListener('change',e=>{ CFG.sound=e.target.checked; lsSet('ms_cfg',CFG); if(CFG.sound){ensureAudio();beep(600,.12,0)} });
-$('optHaptic').addEventListener('change',e=>{ CFG.haptic=e.target.checked; lsSet('ms_cfg',CFG); if(CFG.haptic&&navigator.vibrate) navigator.vibrate(80); });
-$('optCal').addEventListener('change',e=>{ CFG.calibrated=e.target.checked; lsSet('ms_cfg',CFG); render(); });
-$('btnDefaults').addEventListener('click',()=>{ if(confirm('Restore all settings to the placeholder defaults?')){ CFG=Object.assign({},DEF); lsSet('ms_cfg',CFG); buildSettings(); onCfg(); } });
-document.querySelectorAll('[data-fault]').forEach(b=>b.addEventListener('click',()=>{
-  const k=b.dataset.fault; SIM.faults[k]=!SIM.faults[k]; b.setAttribute('aria-pressed',String(SIM.faults[k]));
-  addAlert(0,'Demo fault "'+k+'" '+(SIM.faults[k]?'injected':'cleared')+'.');
-}));
-window.addEventListener('resize',drawCharts);
-
-buildSettings(); $('tgt').max=CFG.rpmMax; drawTicks(); renderLog(); setConn('disconnected');
-if(!navigator.bluetooth) showSupport();
-requestAnimationFrame(animate);
+render();
 </script>
 </body>
 </html>

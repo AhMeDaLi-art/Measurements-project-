@@ -5,13 +5,13 @@ An ESP32-based station that **measures** the current and speed (RPM) of a DC mot
 ```
  DC motor ── H-bridge ── ESP32 ── Wi-Fi ── MQTT broker ── MotorStation_App.html (browser)
               ▲            ▲
-        20 A current   IR sensor
+        ACS712-20A   IR sensor
           sensor       (RPM)
 ```
 
 ## Features
 
-- **Current measurement** with a 20 A Hall-effect sensor (100 mV/A), averaged and filtered, with a stored calibration gain.
+- **Current measurement** with aACS712-20A (100 mV/A), averaged and filtered, with a stored calibration gain.
 - **Reads 0 mA when the motor is stopped** (zero is forced after the PWM has been off for 1 s, and the zero point is re-measured automatically while idle).
 - **RPM measurement** with an IR sensor and a 4-arm fan, averaged over a sliding 30 s window.
 - **Remote control** of the motor: on/off, duty cycle (0–100 %), direction.
@@ -28,7 +28,7 @@ An ESP32-based station that **measures** the current and speed (RPM) of a DC mot
 
 ## Hardware
 
-- ESP32 development board
+- ESP32 38 Pin development board
 - ACS712-20A
 - H-bridge motor driver (ENA / IN1 / IN2)
 - DC motor 12V with Gearbox

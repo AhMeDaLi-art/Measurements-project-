@@ -29,17 +29,18 @@ An ESP32-based station that **measures** the current and speed (RPM) of a DC mot
 ## Hardware
 
 - ESP32 development board
-- 20 A current sensor (100 mV/A, 2.5 V at zero current, e.g. ACS712-20A)
+- ACS712-20A
 - H-bridge motor driver (ENA / IN1 / IN2)
-- DC motor
-- IR sensor + 4-arm fan on the motor shaft (for RPM)
-- Resistors for the current-sensor voltage divider: 14.5 kΩ and 22 kΩ (plus 1 kΩ in series with the ADC pin)
+- DC motor 12V with Gearbox
+- IR sensor
+- Resistors for the ACS712 voltage divider: 14.5 kΩ and 22 kΩ (plus 1 kΩ in series with the ADC pin)
+- Capacitors for fining the ACS712 reading 
 
 ### Pin mapping
 
 | Function | ESP32 pin |
 |---|---|
-| Current sensor (after divider) | GPIO 36 (ADC1) |
+| ACS712 (after divider) | GPIO 36 (ADC1) |
 | IR sensor (RPM) | GPIO 39 |
 | Motor PWM (H-bridge ENA) | GPIO 22 |
 | Motor direction IN1 | GPIO 26 |
@@ -62,7 +63,6 @@ The sensor output (about 2.5 V at zero current when powered from 5 V) is scaled 
    If `OWNER_KEY` is left empty (`""`), the motor cannot be controlled remotely (monitoring only).
 4. Select your ESP32 board, upload, and open the Serial Monitor at **115200 baud**.
 
-> ⚠️ **Do not publish your Wi-Fi password or owner key.** Replace them with placeholders before making this repository public.
 
 ## Web dashboard
 

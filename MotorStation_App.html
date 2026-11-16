@@ -44,8 +44,7 @@ button{cursor:pointer}
 .banner .why{font-size:13px;color:var(--mute);margin-top:4px}
 .banner.lv-0{border-color:var(--ok);background:var(--okbg)} .banner.lv-0 .ico{background:var(--ok)} .banner.lv-0 .lbl{color:var(--ok)}
 .banner.lv-1{border-color:var(--warn);background:var(--warnbg)} .banner.lv-1 .ico{background:var(--warn)} .banner.lv-1 .lbl{color:var(--warn)}
-.reads{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-@media (max-width:480px){.reads{grid-template-columns:1fr}}
+.reads{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .read{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
 .read .t{font-size:12px;font-weight:700;color:var(--mute)}
 .num{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
@@ -74,12 +73,15 @@ input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
 .log time{color:var(--mute);font-variant-numeric:tabular-nums;flex:none}
 .log li.w span{color:var(--warn);font-weight:600}
 .empty{padding:12px;color:var(--mute);font-size:13px}
+.recdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--crit);margin-right:6px;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.recdot{animation:none}}
 </style>
 </head>
 <body>
 
 <header class="top">
-  <div class="grow"><h1>Motor Station</h1><div class="sub">Remote control &amp; monitor over MQTT</div></div>
+  <div class="grow"><h1>Motor Station</h1><div class="sub">Remote motor control &amp; monitoring</div></div>
   <span id="chip" class="chip"><span class="dot"></span><span id="chipT">Disconnected</span></span>
 </header>
 <div class="row" style="margin-top:4px"><button id="btnConn" class="btn primary grow" type="button">Connect</button></div>
@@ -95,13 +97,24 @@ input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
     <div class="read"><div class="t">Speed</div><div><span class="num" id="rRpm">&mdash;</span><span class="unit">rpm</span></div><div class="s" id="rRpmS"></div></div>
     <div class="read"><div class="t">Motor current</div><div><span class="num" id="rCur">&mdash;</span><span class="unit">mA</span></div><div class="s"></div></div>
     <div class="read"><div class="t">PWM applied</div><div><span class="num" id="rDuty">&mdash;</span><span class="unit">%</span></div><div class="s" id="rDutyS"></div></div>
+    <div class="read"><div class="t">Vibration</div><div><span class="num" id="rVib">&mdash;</span><span class="unit">mg</span></div><div class="s" id="rVibS"></div></div>
   </div>
+</section>
+
+<section class="card" aria-label="Data recording">
+  <h2>Data recording</h2>
+  <div class="sub">Log the live readings and save them as a CSV file (opens in Excel or Google Sheets).</div>
+  <div class="row">
+    <button id="btnRec" class="btn go grow" type="button" disabled>Start recording</button>
+    <button id="btnSave" class="btn" type="button" disabled>Save CSV</button>
+  </div>
+  <div class="sub" id="recNote" role="status" style="margin-top:8px">Not recording.</div>
 </section>
 
 <section class="card" aria-label="Motor control">
   <h2>Control</h2>
   <div class="keyrow">
-    <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Owner key (same as OWNER_KEY in the firmware)" aria-label="Owner key">
+    <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Owner key" aria-label="Owner key">
     <button id="btnTake" class="btn primary" type="button" disabled>Take control</button>
   </div>
   <div class="sub" id="ownNote" style="margin-top:6px"></div>
@@ -124,7 +137,7 @@ input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
   </div>
   <div class="sub" style="margin-top:6px">Changing direction while running stops the motor and pauses 1.5 s. Set Running again afterwards.</div>
 
-  <div class="rep" id="rep">ESP32 reports: &mdash;</div>
+  <div class="rep" id="rep">Status: &mdash;</div>
 </section>
 
 <section class="card" aria-label="Events">
@@ -141,12 +154,15 @@ input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
 const MQTT_URL = 'wss://broker.emqx.io:8084/mqtt';
 const BASE     = 'motorstation/demo-k7q2/';
 const T_TEL = BASE+'telemetry', T_ST = BASE+'status', T_CMD = BASE+'cmd';
-const STALE_MS = 6000;   // firmware publishes every 2 s
+const STALE_MS = 12000;  // firmware publishes every 4 s
 const HB_MS    = 4000;   // heartbeat; firmware lease is 12 s
 const ACK_MS   = 3000, MAX_TRIES = 3;
 
 const $ = id => document.getElementById(id);
 const hhmmss = () => new Date().toLocaleTimeString([], {hour12:false});
+const pad2 = n => String(n).padStart(2,'0');
+const stampOf = d => d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+' '+pad2(d.getHours())+':'+pad2(d.getMinutes())+':'+pad2(d.getSeconds());
+const fileStampOf = d => d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'-'+pad2(d.getHours())+pad2(d.getMinutes())+pad2(d.getSeconds());
 
 /* ====================== SHA-256 / HMAC (fallback when crypto.subtle is unavailable) ====================== */
 const K=[], H0=[];
@@ -213,6 +229,41 @@ function log(text,warn){
   }
 }
 
+/* ====================== CSV recording ======================
+   One row per telemetry message while recording. Rows are kept in memory until saved. */
+const REC = { on:false, rows:[], t0:null, saved:true };
+const CSV_HEAD = ['timestamp','elapsed_s','state','direction','command_pwm_pct','applied_pwm_pct','speed_rpm','current_mA','vibration_mg','sensor_fault'];
+function recAdd(t){
+  if(!REC.on) return;
+  const now=new Date();
+  REC.rows.push([stampOf(now),((now-REC.t0)/1000).toFixed(1),t.on?'running':'stopped',t.dir?'reverse':'forward',
+    t.cd,t.duty,t.rpm==null?'':t.rpm,t.cur,t.vib==null?'':t.vib,(t.flags&1)?1:0]);
+  REC.saved=false;
+}
+function saveCsv(){
+  if(!REC.rows.length) return;
+  const csv='\uFEFF'+[CSV_HEAD].concat(REC.rows).map(r=>r.join(',')).join('\r\n')+'\r\n';
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a'); a.href=url; a.download='motor-log-'+fileStampOf(REC.t0||new Date())+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+  REC.saved=true;
+}
+function startRec(){
+  REC.on=true; REC.rows=[]; REC.t0=new Date(); REC.saved=true;
+  log('Recording started.');
+  if(S.T&&!S.stale) recAdd(S.T);
+  render();
+}
+function stopRec(){
+  if(!REC.on) return;
+  REC.on=false;
+  if(REC.rows.length){ saveCsv(); log('Recording stopped. '+REC.rows.length+' samples saved to a CSV file.'); }
+  else log('Recording stopped. No samples were recorded.',true);
+  render();
+}
+window.addEventListener('beforeunload',e=>{ if(REC.rows.length&&!REC.saved){ e.preventDefault(); e.returnValue=''; } });
+
 /* ====================== command channel ======================
    Wire format:  id|sid|op|val|nonce|hmac   (hmac = HMAC-SHA256(key, "id|sid|op|val|nonce"))
    Commands are sent one at a time; the ESP32 answers with ack=id and a fresh nonce.            */
@@ -241,18 +292,18 @@ function retry(it,why){
 }
 function onTimeout(id){
   if(!cur||cur.id!==id) return;
-  const it=cur.item; cur=null; busy=false; retry(it,'no reply from the ESP32'); render(); pump();
+  const it=cur.item; cur=null; busy=false; retry(it,'no reply from the motor controller'); render(); pump();
 }
 function onAck(res){
   const c=cur; clearTimeout(c.timer); cur=null; busy=false;
   const it=c.item;
   if(res===0){
     drop(it);
-    if(it.op==='rel'){ S.haveCtl=false; log('Control released. The ESP32 stops the motor.'); }
+    if(it.op==='rel'){ S.haveCtl=false; log('Control released. The motor stops.'); }
     else if(!S.haveCtl){ S.haveCtl=true; log('You have control of the motor.'); }
-  } else if(res===3){ retry(it,'stale nonce'); }
-  else if(res===2){ queue.length=0; S.haveCtl=false; log('Another owner session is active. Wait about 12 s for it to expire, then take control again.',true); }
-  else if(res===1){ queue.length=0; S.haveCtl=false; log('Rejected: wrong owner key, or OWNER_KEY is still empty in the firmware.',true); }
+  } else if(res===3){ retry(it,'session out of sync, retrying'); }
+  else if(res===2){ queue.length=0; S.haveCtl=false; log('Another session is in control. Wait about 12 s, then take control again.',true); }
+  else if(res===1){ queue.length=0; S.haveCtl=false; log('Rejected: wrong owner key.',true); }
   else { drop(it); log('Command "'+it.op+'" rejected: invalid value.',true); }
   render(); pump();
 }
@@ -263,8 +314,10 @@ function parseTel(raw){
   let j; try{ j=JSON.parse(raw) }catch(e){ return null }
   if(!j||typeof j!=='object') return null;
   const n=(v,lo,hi)=>{ v=Number(v); return Number.isFinite(v)?Math.min(hi,Math.max(lo,Math.round(v))):null };
+  const f=(v,lo,hi)=>{ v=Number(v); return Number.isFinite(v)?Math.min(hi,Math.max(lo,Math.round(v*10)/10)):null };   // 1 decimal
   const cur=n(j.cur,0,65535); if(cur===null) return null;
   return { rpm:(j.rpm==null?null:n(j.rpm,0,65535)), rw:n(j.rw,0,999)||0, cur,
+           vib:(j.vib==null?null:f(j.vib,0,99999)),
            duty:n(j.duty,0,100)||0, cd:n(j.cd,0,100)||0, dir:n(j.dir,0,1)||0, on:n(j.on,0,1)||0,
            own:n(j.own,0,1)||0, flags:n(j.flags,0,255)||0,
            nonce:(typeof j.n==='string'&&/^[0-9a-f]{8}$/.test(j.n))?j.n:null,
@@ -273,9 +326,10 @@ function parseTel(raw){
 function onTelemetry(t){
   S.T=t; S.ts=performance.now();
   if(t.nonce) S.nonce=t.nonce;
-  if(S.stale){ S.stale=false; log('Telemetry resumed.'); }
+  if(S.stale){ S.stale=false; log('Data resumed.'); }
+  recAdd(t);
   if(cur && t.ack===cur.id) onAck(t.res);
-  if(S.haveCtl && !cur && !t.own){ S.haveCtl=false; log('Control lost: owner session expired.',true); }
+  if(S.haveCtl && !cur && !t.own){ S.haveCtl=false; log('Control lost: your session expired.',true); }
   if(performance.now()>S.hold && !queue.some(q=>q.op==='duty') && !(cur&&cur.item.op==='duty')){
     $('duty').value=t.cd; $('dutyVal').textContent=t.cd;
   }
@@ -285,32 +339,33 @@ function onTelemetry(t){
 /* ====================== MQTT ====================== */
 function setConn(c){ S.conn=c; render(); }
 function mqttConnect(){
-  if(typeof mqtt==='undefined'){ log('MQTT library did not load (internet access needed).',true); return; }
+  if(typeof mqtt==='undefined'){ log('Could not start the connection (internet access needed).',true); return; }
   userDisc=false;
   let c;
   try{ c=mqtt.connect(MQTT_URL,{clientId:'motorstation-web-'+Math.random().toString(16).slice(2,10),clean:true,reconnectPeriod:3000,connectTimeout:8000,keepalive:30}); }
-  catch(e){ log('MQTT: '+(e&&e.message?e.message:e),true); return; }
+  catch(e){ log('Connection error: '+(e&&e.message?e.message:e),true); return; }
   mqttClient=c; S.T=null; S.stale=false; S.nonce=null; S.esp=''; S.haveCtl=false; queue=[]; cur=null; busy=false;
   setConn('connecting');
   c.on('connect',()=>{
     if(c!==mqttClient) return;
-    c.subscribe([T_TEL,T_ST],{qos:0},err=>{ if(err) log('Subscribe failed: '+err.message,true); });
-    setConn('mqtt'); log('Connected to the MQTT broker.');
+    c.subscribe([T_TEL,T_ST],{qos:0},err=>{ if(err) log('Could not receive data: '+err.message,true); });
+    setConn('mqtt'); log('Connected.');
   });
   c.on('message',(topic,payload)=>{
     if(c!==mqttClient) return;
     const s=payload.toString();
     if(topic===T_TEL){ if(s.length<=600){ const t=parseTel(s); if(t) onTelemetry(t); } }
-    else if(topic===T_ST){ S.esp=(s==='online'||s==='offline')?s:''; log('ESP32 is '+(S.esp||'unknown')+'.',S.esp!=='online'); render(); }
+    else if(topic===T_ST){ S.esp=(s==='online'||s==='offline')?s:''; log('Motor controller is '+(S.esp||'unknown')+'.',S.esp!=='online'); render(); }
   });
   c.on('close',()=>{
     if(c!==mqttClient||userDisc) return;
-    if(S.conn==='mqtt'){ S.stale=true; log('MQTT link lost. Reconnecting…',true); }
+    if(S.conn==='mqtt'){ S.stale=true; log('Connection lost. Reconnecting…',true); }
     clearTimeout(cur&&cur.timer); cur=null; busy=false; queue=[]; S.haveCtl=false; setConn('connecting');
   });
-  c.on('error',e=>{ if(c===mqttClient) log('MQTT: '+(e&&e.message?e.message:e),true); });
+  c.on('error',e=>{ if(c===mqttClient) log('Connection error: '+(e&&e.message?e.message:e),true); });
 }
 function mqttDisconnect(){
+  if(REC.on) stopRec();
   userDisc=true; const c=mqttClient; mqttClient=null;
   clearTimeout(cur&&cur.timer); cur=null; busy=false; queue=[];
   try{ if(c) c.end(true); }catch(e){}
@@ -321,16 +376,16 @@ function mqttDisconnect(){
 function render(){
   const T=S.T, linked=S.conn==='mqtt', fresh=linked&&T&&!S.stale&&S.esp!=='offline';
   const chip=$('chip'); chip.className='chip'+(linked?' on':S.conn==='connecting'?' busy':'');
-  $('chipT').textContent={off:'Disconnected',connecting:'Connecting…',mqtt:'Connected (MQTT)'}[S.conn];
+  $('chipT').textContent={off:'Disconnected',connecting:'Connecting…',mqtt:'Connected'}[S.conn];
   $('btnConn').textContent=S.conn==='off'?'Connect':'Disconnect';
 
   let lvl='off',lbl,why,ico='!';
-  if(S.conn==='off'){ lbl='OFFLINE'; why='Press Connect to talk to the ESP32 through the MQTT broker.'; ico='\u23FB'; }
-  else if(S.conn==='connecting'){ lbl='CONNECTING'; why='Reaching the MQTT broker…'; ico='\u2026'; }
-  else if(!T){ lbl='WAITING'; why='Connected to the broker. Waiting for telemetry from the ESP32 (powered and on Wi-Fi?).'; ico='\u2026'; }
-  else if(S.esp==='offline'){ lbl='ESP32 OFFLINE'; why='The broker reports the ESP32 as offline. Values below are not live.'; }
-  else if(S.stale){ lbl='DATA STALE'; why='No telemetry for more than '+(STALE_MS/1000)+' s. Values below are not live.'; }
-  else if(T.flags&1){ lvl=1; lbl='SENSOR FAULT'; why='Current ADC out of range. Check the current sensor wiring.'; }
+  if(S.conn==='off'){ lbl='OFFLINE'; why='Press Connect to start monitoring and controlling the motor.'; ico='\u23FB'; }
+  else if(S.conn==='connecting'){ lbl='CONNECTING'; why='Establishing connection…'; ico='\u2026'; }
+  else if(!T){ lbl='WAITING'; why='Connected. Waiting for data from the motor controller (is it powered and online?).'; ico='\u2026'; }
+  else if(S.esp==='offline'){ lbl='CONTROLLER OFFLINE'; why='The motor controller is offline. Values below are not live.'; }
+  else if(S.stale){ lbl='DATA STALE'; why='No data for more than '+(STALE_MS/1000)+' s. Values below are not live.'; }
+  else if(T.flags&1){ lvl=1; lbl='SENSOR FAULT'; why='Current reading out of range. Check the current sensor wiring.'; }
   else if(T.on&&T.duty>0){ lvl=0; lbl='RUNNING'; why=T.duty+' % PWM, '+(T.dir?'reverse':'forward')+'.'; ico='\u2713'; }
   else { lbl='STOPPED'; why=T.on?'Running state is set but speed is 0 %.':'Motor is stopped.'; ico='\u23FB'; }
   $('banner').className='banner lv-'+lvl; $('bIco').textContent=ico; $('bLbl').textContent=lbl; $('bWhy').textContent=why;
@@ -340,6 +395,21 @@ function render(){
   $('rCur').textContent = fresh ? T.cur : '\u2014';
   $('rDuty').textContent = fresh ? T.duty : '\u2014';
   $('rDutyS').textContent = fresh ? 'command: '+T.cd+' %' : '';
+  $('rVib').textContent = fresh&&T.vib!=null ? T.vib : '\u2014';
+  $('rVibS').textContent = fresh&&T.vib==null ? 'no sensor data' : '';
+
+  /* recording card */
+  $('btnRec').disabled = !(REC.on||fresh);
+  $('btnRec').textContent = REC.on?'Stop & save CSV':'Start recording';
+  $('btnRec').className = 'btn grow '+(REC.on?'danger':'go');
+  $('btnSave').disabled = !REC.rows.length;
+  const rn=$('recNote');
+  if(REC.on){
+    const sec=Math.floor((Date.now()-REC.t0)/1000);
+    rn.textContent='';
+    const d=document.createElement('span'); d.className='recdot'; rn.appendChild(d);
+    rn.appendChild(document.createTextNode('Recording \u2022 '+REC.rows.length+' samples \u2022 '+pad2(Math.floor(sec/60))+':'+pad2(sec%60)+(fresh?'':' (paused: no live data)')));
+  } else rn.textContent = REC.rows.length ? 'Last recording: '+REC.rows.length+' samples. Press Save CSV to download it again.' : 'Not recording.';
 
   const can=fresh&&S.haveCtl;
   for(const id of ['btnOff','btnOn','duty','dirF','dirR','btnStop']) $(id).disabled=!can;
@@ -348,19 +418,19 @@ function render(){
   $('btnTake').textContent = S.haveCtl?'Release control':'Take control';
   $('btnTake').className = 'btn '+(S.haveCtl?'':'primary');
   $('key').disabled = S.haveCtl;
-  $('ownNote').textContent = S.haveCtl ? 'You are the owner. A heartbeat keeps the session alive; the motor stops if the page closes or loses the link.'
-    : (T&&T.own&&linked) ? 'The motor is owned by another session (or this one before a reload). Take control to claim it once its lease expires.'
-    : 'Type the owner key and take control to drive the motor. The key stays in this page; commands are signed with it.';
+  $('ownNote').textContent = S.haveCtl ? 'You have control. The motor stops if this page is closed or the connection is lost.'
+    : (T&&T.own&&linked) ? 'The motor is controlled by another session (or this one before a reload). Take control once it becomes available.'
+    : 'Enter the owner key and take control to drive the motor.';
   if(T&&linked){
     $('btnOn').setAttribute('aria-pressed',String(!!T.on)); $('btnOff').setAttribute('aria-pressed',String(!T.on));
     $('dirF').setAttribute('aria-pressed',String(!T.dir)); $('dirR').setAttribute('aria-pressed',String(!!T.dir));
-    $('rep').innerHTML='ESP32 reports: state <b>'+(T.on?'running':'stopped')+'</b> \u2022 command <b>'+T.cd+' %</b> \u2022 applied <b>'+T.duty+' %</b> \u2022 <b>'+(T.dir?'reverse':'forward')+'</b> \u2022 owner <b>'+(T.own?'yes':'none')+'</b>'+(fresh?'':' (stale)');
-  } else $('rep').textContent='ESP32 reports: \u2014';
+    $('rep').innerHTML='Status: state <b>'+(T.on?'running':'stopped')+'</b> \u2022 command <b>'+T.cd+' %</b> \u2022 applied <b>'+T.duty+' %</b> \u2022 <b>'+(T.dir?'reverse':'forward')+'</b> \u2022 control <b>'+(T.own?'taken':'free')+'</b>'+(fresh?'':' (stale)');
+  } else $('rep').textContent='Status: \u2014';
 }
 setInterval(()=>{
   if(S.conn==='mqtt'&&S.T){
     const age=performance.now()-S.ts;
-    if(!S.stale&&age>STALE_MS){ S.stale=true; log('No telemetry for '+(STALE_MS/1000)+' s: data is stale.',true); }
+    if(!S.stale&&age>STALE_MS){ S.stale=true; log('No data for '+(STALE_MS/1000)+' s: values are stale.',true); }
     $('age').textContent=S.stale?'':'\u2022 updated '+(age/1000).toFixed(1)+' s ago';
   } else $('age').textContent='';
   render();
@@ -368,6 +438,8 @@ setInterval(()=>{
 
 /* ====================== wiring ====================== */
 $('btnConn').addEventListener('click',()=>{ if(S.conn==='off') mqttConnect(); else mqttDisconnect(); });
+$('btnRec').addEventListener('click',()=>{ if(REC.on) stopRec(); else startRec(); });
+$('btnSave').addEventListener('click',saveCsv);
 $('key').addEventListener('input',e=>{ S.key=e.target.value.trim(); render(); });
 $('btnTake').addEventListener('click',()=>{
   S.key=$('key').value.trim();

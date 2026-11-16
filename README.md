@@ -63,7 +63,6 @@ The sensor output (about 2.5 V at zero current when powered from 5 V) is scaled 
    If `OWNER_KEY` is left empty (`""`), the motor cannot be controlled remotely (monitoring only).
 4. Select your ESP32 board, upload, and open the Serial Monitor at **115200 baud**.
 
-
 ## Web dashboard
 
 1. Open `MotorStation_App.html` in your browser.
